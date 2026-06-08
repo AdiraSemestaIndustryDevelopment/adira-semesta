@@ -756,26 +756,27 @@
 <!-- ─── Firebase ─── -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, getDoc }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // ── REPLACE THESE WITH YOUR FIREBASE CONFIG ──
-const firebaseConfig = {
-  apiKey: "AIzaSyCEJctdDV2KPa7zQ9JmooCdb1Ccw0U95cM",
-  authDomain: "adira-semesta-industry.firebaseapp.com",
-  projectId: "adira-semesta-industry",
-  storageBucket: "adira-semesta-industry.firebasestorage.app",
-  messagingSenderId: "32858218778",
-  appId: "1:32858218778:web:0a3156a5dbb41494244ca3"
-};
-  // ─────────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCEJctdDV2KPa7zQ9JmooCdb1Ccw0U95cM",
+    authDomain:        "adira-semesta-industry.firebaseapp.com",
+    projectId:         "adira-semesta-industry",
+    storageBucket:     "adira-semesta-industry.firebasestorage.app",
+    messagingSenderId: "32858218778",
+    appId:             "1:32858218778:web:0a3156a5dbb41494244ca3"
+  };
 
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const provider = new GoogleAuthProvider();
+
+  // Handle redirect result on page load
+  getRedirectResult(auth).catch(console.error);
 
   window.signInWithGoogle = async () => {
     const btn     = document.getElementById('btn-login');
@@ -783,9 +784,9 @@ const firebaseConfig = {
     const btnText = document.getElementById('btn-login-text');
     btn.disabled = true;
     spinner.style.display = 'block';
-    btnText.textContent = 'Signing in…';
+    btnText.textContent = 'Redirecting to Google…';
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
     } catch(e) {
       console.error(e);
       btn.disabled = false;
