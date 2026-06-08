@@ -756,7 +756,7 @@
 <!-- ─── Firebase ─── -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged }
+  import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, signOut as fbSignOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, getDoc }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -776,10 +776,8 @@
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
-  // Handle redirect result on page load
-  getRedirectResult(auth).then(result => {
-    if (result && result.user) console.log('Redirect login success');
-  }).catch(e => console.error('Redirect error:', e));
+  // Set persistence so login survives page refresh
+  setPersistence(auth, browserLocalPersistence);
 
   window.signInWithGoogle = async () => {
     const btn     = document.getElementById('btn-login');
@@ -787,9 +785,9 @@
     const btnText = document.getElementById('btn-login-text');
     btn.disabled = true;
     spinner.style.display = 'block';
-    btnText.textContent = 'Redirecting to Google…';
+    btnText.textContent = 'Signing in…';
     try {
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch(e) {
       console.error(e);
       btn.disabled = false;
