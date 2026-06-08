@@ -774,9 +774,12 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
 
   // Handle redirect result on page load
-  getRedirectResult(auth).catch(console.error);
+  getRedirectResult(auth).then(result => {
+    if (result && result.user) console.log('Redirect login success');
+  }).catch(e => console.error('Redirect error:', e));
 
   window.signInWithGoogle = async () => {
     const btn     = document.getElementById('btn-login');
