@@ -1,1 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adira Semesta Industry — Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --white: #ffffff;
+    --off-white: #f7f8fa;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text-primary: #0a0a0a;
+    --text-secondary: #5a5a6e;
+    --text-muted: #9a9aaa;
+    --accent: #0047ff;
+    --accent-light: #e8eeff;
+    --accent-glow: rgba(0,71,255,0.12);
+    --danger: #e53935;
+    --success: #00c853;
+    --card-radius: 20px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--off-white);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── Background Grid ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,71,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,71,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Auth Overlay ─── */
+  #auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: white;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+
+  #auth-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .auth-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 56px 48px;
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+    position: relative;
+  }
+
+  .auth-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .auth-logo span.dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .auth-card h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .auth-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+
+  .btn-google {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    background: var(--text-primary);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    letter-spacing: 0.01em;
+  }
+
+  .btn-google:hover {
+    background: #1a1a2e;
+    transform: translateY(-1px);
+  }
+
+  .btn-google:active { transform: translateY(0); }
+
+  .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .auth-note {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ─── Access Denied ─── */
+  #access-denied {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-radius: 16px;
+    max-width: 400px;
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  #access-denied h3 { font-size: 16px; color: var(--danger); }
+  #access-denied p { font-size: 13px; color: #b91c1c; }
+
+  .btn-signout-small {
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+  }
+
+  .btn-signout-small:hover { background: var(--off-white); }
+
+  /* ─── Loading Spinner ─── */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Main Portal ─── */
+  #main-portal {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  #main-portal.visible { opacity: 1; }
+
+  /* ─── Top Nav ─── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 64px;
+    background: rgba(247, 248, 250, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-brand span.dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 8px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .user-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .user-avatar-placeholder {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .btn-signout {
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .btn-signout:hover {
+    background: white;
+    border-color: var(--border-strong);
+  }
+
+  /* ─── Hero ─── */
+  .hero {
+    padding: 80px 48px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--accent-light);
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .hero-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 600;
+    line-height: 1.05;
+    color: var(--text-primary);
+    max-width: 700px;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    line-height: 1.7;
+  }
+
+  /* ─── Stats Row ─── */
+  .stats-row {
+    display: flex;
+    gap: 48px;
+    padding: 0 48px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ─── App Grid ─── */
+  .apps-section {
+    padding: 0 48px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  /* ─── App Card ─── */
+  .app-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 32px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .app-card:hover {
+    border-color: rgba(0,71,255,0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 60px rgba(0,71,255,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  }
+
+  .app-card:hover::before { opacity: 1; }
+
+  .app-card.featured {
+    border-color: rgba(0,71,255,0.15);
+    background: linear-gradient(135deg, #fafbff 0%, white 100%);
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .app-card.featured .card-content { flex: 1; }
+
+  .card-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .card-icon svg { width: 24px; height: 24px; }
+
+  .card-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 4px 10px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .card-badge.new {
+    background: #e8fdf0;
+    color: #00a844;
+  }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.06em;
+  }
+
+  .card-arrow {
+    margin-left: auto;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--off-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+  }
+
+  .app-card:hover .card-arrow {
+    background: var(--accent);
+  }
+
+  .app-card:hover .card-arrow svg path {
+    stroke: white;
+  }
+
+  /* ─── Coming Soon Card ─── */
+  .app-card.soon {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .card-badge.soon-badge {
+    background: #f5f5f5;
+    color: #999;
+  }
+
+  /* ─── Footer ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ─── Role Badge in Nav ─── */
+  .role-badge {
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .role-admin { background: #fff3cd; color: #b45309; }
+  .role-user  { background: var(--accent-light); color: var(--accent); }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .hero { padding: 48px 20px 40px; }
+    .stats-row { padding: 0 20px 40px; gap: 28px; flex-wrap: wrap; }
+    .apps-section { padding: 0 20px 60px; }
+    .apps-grid { grid-template-columns: 1fr; }
+    .app-card.featured { flex-direction: column; }
+    footer { padding: 24px 20px; flex-direction: column; gap: 8px; text-align: center; }
+  }
+
+  /* ─── Animate in ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .app-card {
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .app-card:nth-child(1) { animation-delay: 0.05s; }
+  .app-card:nth-child(2) { animation-delay: 0.1s; }
+  .app-card:nth-child(3) { animation-delay: 0.15s; }
+  .app-card:nth-child(4) { animation-delay: 0.2s; }
+</style>
+</head>
+<body>
+
+<!-- ─── Auth Overlay ─── -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="dot"></span>
+      Adira Semesta Industry
+    </div>
+    <h1>Internal Portal</h1>
+    <p>Sign in with your authorized Google Account to access the workspace.</p>
+
+    <button class="btn-google" id="btn-login" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      <span id="btn-login-text">Continue with Google</span>
+      <div class="spinner" id="login-spinner"></div>
+    </button>
+
+    <p class="auth-note">Access is restricted to authorized personnel only.</p>
+
+    <div id="access-denied">
+      <h3>Access Denied</h3>
+      <p id="denied-msg">Your account is not authorized to access this portal.</p>
+      <button class="btn-signout-small" onclick="signOut()">Sign out & try another account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Main Portal ─── -->
+<div id="main-portal">
+
+  <!-- Nav -->
+  <nav>
+    <div class="nav-brand">
+      <span class="dot"></span>
+      Adira Semesta
+    </div>
+    <div class="nav-right">
+      <div class="user-chip">
+        <img class="user-avatar" id="user-photo" src="" alt="" onerror="this.style.display='none'; document.getElementById('user-initials').style.display='flex';">
+        <div class="user-avatar-placeholder" id="user-initials" style="display:none;"></div>
+        <span id="user-name">—</span>
+      </div>
+      <span class="role-badge" id="role-badge"></span>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-label">Industry Operations Portal</div>
+    <h1>Your workspace,<br><em>reimagined.</em></h1>
+    <p>All tools and applications for Adira Semesta Industry operations, accessible in one place.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <span class="stat-value" id="stat-apps">1</span>
+      <span class="stat-label">Active Apps</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">24/7</span>
+      <span class="stat-label">Uptime</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-role-display">—</span>
+      <span class="stat-label">Your Access Level</span>
+    </div>
+  </div>
+
+  <!-- Apps -->
+  <div class="apps-section">
+    <div class="section-header">
+      <span class="section-title">Applications</span>
+    </div>
+    <div class="apps-grid">
+
+      <!-- Glove Builder — FEATURED -->
+      <a href="./glove-builder/index.html" class="app-card featured">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0047ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+          </svg>
+        </div>
+        <div class="card-badge new">New</div>
+        <div class="card-content">
+          <div class="card-title">Glove Custom Builder</div>
+          <div class="card-desc">Design custom gloves from scratch — configure every part, material, color, print method, and logo. Get real-time SMV, consumption & costing estimates.</div>
+          <div class="card-meta">
+            <span class="card-tag">3D VIEWER</span>
+            <span class="card-tag">AUTO COSTING</span>
+            <span class="card-tag">EXPORT PDF</span>
+            <div class="card-arrow">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Coming Soon Cards -->
+      <div class="app-card soon">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0047ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="2"/>
+            <path d="M9 12h6M9 16h4"/>
+          </svg>
+        </div>
+        <div class="card-badge soon-badge">Soon</div>
+        <div class="card-title">Order Management</div>
+        <div class="card-desc">Track and manage production orders, timelines, and delivery status in real time.</div>
+        <div class="card-meta">
+          <span class="card-tag">Coming Q3 2025</span>
+        </div>
+      </div>
+
+      <div class="app-card soon">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0047ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h18v18H3zM3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div class="card-badge soon-badge">Soon</div>
+        <div class="card-title">Inventory Tracker</div>
+        <div class="card-desc">Monitor raw material stock levels, reorder points, and consumption history.</div>
+        <div class="card-meta">
+          <span class="card-tag">Coming Q4 2025</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-brand">Adira Semesta Industry</div>
+    <div class="footer-copy">© 2025 · Internal use only</div>
+  </footer>
+
+</div>
+
+<!-- ─── Firebase ─── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ── REPLACE THESE WITH YOUR FIREBASE CONFIG ──
+  const firebaseConfig = {
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId:             "YOUR_APP_ID"
+  };
+  // ─────────────────────────────────────────────
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  window.signInWithGoogle = async () => {
+    const btn     = document.getElementById('btn-login');
+    const spinner = document.getElementById('login-spinner');
+    const btnText = document.getElementById('btn-login-text');
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Signing in…';
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Continue with Google';
+    }
+  };
+
+  window.signOut = async () => {
+    await fbSignOut(auth);
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    const overlay = document.getElementById('auth-overlay');
+    const portal  = document.getElementById('main-portal');
+    const denied  = document.getElementById('access-denied');
+
+    if (!user) {
+      overlay.classList.remove('hidden');
+      portal.classList.remove('visible');
+      denied.style.display = 'none';
+      // Reset button
+      document.getElementById('btn-login').disabled = false;
+      document.getElementById('login-spinner').style.display = 'none';
+      document.getElementById('btn-login-text').textContent = 'Continue with Google';
+      return;
+    }
+
+    // Check Firestore whitelist
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+    if (!userDoc.exists() || !userDoc.data().active) {
+      denied.style.display = 'flex';
+      document.getElementById('denied-msg').textContent =
+        `${user.email} is not authorized. Contact your administrator.`;
+      document.getElementById('btn-login').disabled = false;
+      document.getElementById('login-spinner').style.display = 'none';
+      document.getElementById('btn-login-text').textContent = 'Try another account';
+      return;
+    }
+
+    // Authorized — show portal
+    const data = userDoc.data();
+    const role = data.role || 'user';
+
+    overlay.classList.add('hidden');
+    portal.classList.add('visible');
+    denied.style.display = 'none';
+
+    // Populate nav
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    const photo = document.getElementById('user-photo');
+    if (user.photoURL) {
+      photo.src = user.photoURL;
+    } else {
+      photo.style.display = 'none';
+      const initEl = document.getElementById('user-initials');
+      initEl.style.display = 'flex';
+      initEl.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+    }
+
+    const roleBadge = document.getElementById('role-badge');
+    roleBadge.textContent = role;
+    roleBadge.className = 'role-badge role-' + (role === 'admin' ? 'admin' : 'user');
+
+    document.getElementById('stat-role-display').textContent =
+      role.charAt(0).toUpperCase() + role.slice(1);
+  });
+</script>
+</body>
+</html>
