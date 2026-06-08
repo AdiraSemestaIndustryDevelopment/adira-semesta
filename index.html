@@ -3,1488 +3,857 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Glove Custom Builder — Adira Semesta</title>
+<title>Adira Semesta Industry — Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --white: #ffffff;
-  --off-white: #f7f8fa;
-  --border: rgba(0,0,0,0.08);
-  --border-strong: rgba(0,0,0,0.15);
-  --text-primary: #0a0a0a;
-  --text-secondary: #5a5a6e;
-  --text-muted: #9a9aaa;
-  --accent: #0047ff;
-  --accent-light: #e8eeff;
-  --panel-width: 340px;
-  --header-height: 60px;
-  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-html, body { height: 100%; overflow: hidden; }
-
-body {
-  font-family: 'Sora', sans-serif;
-  background: #f0f1f5;
-  color: var(--text-primary);
-  display: flex;
-  flex-direction: column;
-}
-
-/* ─── Header ─── */
-header {
-  height: var(--header-height);
-  background: white;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 16px;
-  flex-shrink: 0;
-  z-index: 10;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-family: 'Sora', sans-serif;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-.back-btn:hover { background: var(--off-white); }
-.back-btn svg { width: 14px; height: 14px; }
-
-.header-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.header-subtitle {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: 'Space Mono', monospace;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.header-center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.btn-outline {
-  padding: 7px 16px;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: transparent;
-  font-family: 'Sora', sans-serif;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.btn-outline:hover { background: var(--off-white); }
-
-.btn-primary {
-  padding: 7px 20px;
-  border: none;
-  border-radius: 10px;
-  background: var(--accent);
-  color: white;
-  font-family: 'Sora', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.btn-primary:hover { background: #0038d4; }
-
-/* ─── Main Layout ─── */
-.app-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-/* ─── Left Config Panel ─── */
-.config-panel {
-  width: var(--panel-width);
-  background: white;
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-/* Tab Nav */
-.tab-nav {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  padding: 0 16px;
-  gap: 0;
-  overflow-x: auto;
-  flex-shrink: 0;
-}
-
-.tab-nav::-webkit-scrollbar { display: none; }
-
-.tab-btn {
-  padding: 14px 12px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  font-family: 'Sora', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: var(--transition);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: -1px;
-}
-
-.tab-btn.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.tab-btn:hover:not(.active) { color: var(--text-secondary); }
-
-/* Config Scroll Area */
-.config-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 16px;
-}
-
-.config-scroll::-webkit-scrollbar { width: 4px; }
-.config-scroll::-webkit-scrollbar-track { background: transparent; }
-.config-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-
-/* Tab pane */
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
-
-/* Config Group */
-.config-group {
-  margin-bottom: 24px;
-}
-
-.group-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-family: 'Space Mono', monospace;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-/* Option chips */
-.option-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chip {
-  padding: 6px 12px;
-  background: var(--off-white);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-  user-select: none;
-}
-
-.chip:hover { border-color: rgba(0,71,255,0.3); color: var(--accent); }
-
-.chip.selected {
-  background: var(--accent-light);
-  border-color: rgba(0,71,255,0.3);
-  color: var(--accent);
-  font-weight: 500;
-}
-
-/* Color swatches */
-.color-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.swatch {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: var(--transition);
-  overflow: hidden;
-}
-
-.swatch:hover { transform: scale(1.1); }
-.swatch.selected { border-color: var(--accent); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
-
-.swatch-label {
-  position: absolute;
-  bottom: -22px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 9px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  font-family: 'Space Mono', monospace;
-}
-
-.color-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.color-row-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-/* Material cards */
-.material-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.mat-card {
-  padding: 10px;
-  background: var(--off-white);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: var(--transition);
-  text-align: center;
-}
-
-.mat-card:hover { border-color: rgba(0,71,255,0.3); }
-.mat-card.selected { background: var(--accent-light); border-color: rgba(0,71,255,0.3); }
-
-.mat-name {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-top: 4px;
-}
-
-.mat-swatch {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  margin: 0 auto 4px;
-  border: 1px solid var(--border);
-}
-
-/* ─── 3D Viewport ─── */
-.viewport {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, #e8eaf0 0%, #f0f1f5 50%, #e4e6ed 100%);
-  overflow: hidden;
-}
-
-.viewport-bg-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0,71,255,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,71,255,0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
-
-#three-canvas {
-  display: block;
-  cursor: grab;
-  touch-action: none;
-}
-
-#three-canvas:active { cursor: grabbing; }
-
-/* Viewport Overlay UI */
-.viewport-label {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.viewport-hint {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255,255,255,0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.viewport-controls {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.vp-btn {
-  width: 36px; height: 36px;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.vp-btn:hover { background: white; color: var(--accent); }
-
-/* Model upload prompt */
-.model-upload-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  background: rgba(240,241,245,0.95);
-  backdrop-filter: blur(4px);
-  z-index: 5;
-}
-
-.model-upload-overlay.hidden { display: none; }
-
-.upload-box {
-  width: 320px;
-  padding: 40px 32px;
-  background: white;
-  border: 2px dashed rgba(0,71,255,0.2);
-  border-radius: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.upload-box:hover { border-color: rgba(0,71,255,0.5); }
-
-.upload-icon {
-  width: 52px; height: 52px;
-  margin: 0 auto 16px;
-  background: var(--accent-light);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.upload-icon svg { width: 24px; height: 24px; stroke: var(--accent); }
-
-.upload-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.upload-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-.upload-formats { font-size: 11px; color: var(--text-muted); margin-top: 12px; font-family: 'Space Mono', monospace; }
-
-#model-file-input { display: none; }
-
-/* ─── Right Summary Panel ─── */
-.summary-panel {
-  width: 280px;
-  background: white;
-  border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.summary-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.summary-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.summary-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-}
-
-.summary-scroll::-webkit-scrollbar { width: 3px; }
-.summary-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-
-/* Summary selection list */
-.summary-section {
-  margin-bottom: 20px;
-}
-
-.summary-section-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-family: 'Space Mono', monospace;
-  margin-bottom: 8px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.summary-row:last-child { border-bottom: none; }
-
-.summary-key {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.summary-val {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-primary);
-  text-align: right;
-  max-width: 120px;
-  font-family: 'Space Mono', monospace;
-}
-
-.summary-val.empty { color: var(--text-muted); font-style: italic; font-family: 'Sora', sans-serif; }
-
-/* Costing Section */
-.costing-box {
-  margin: 0 16px 16px;
-  background: var(--off-white);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.costing-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-family: 'Space Mono', monospace;
-  margin-bottom: 12px;
-}
-
-.costing-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-}
-
-.costing-row.total {
-  border-top: 1px solid var(--border-strong);
-  margin-top: 8px;
-  padding-top: 10px;
-}
-
-.costing-label { font-size: 12px; color: var(--text-secondary); }
-.costing-value { font-size: 12px; font-family: 'Space Mono', monospace; color: var(--text-primary); }
-.costing-row.total .costing-label { font-weight: 600; color: var(--text-primary); font-size: 13px; }
-.costing-row.total .costing-value { font-weight: 700; color: var(--accent); font-size: 15px; }
-
-.smv-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.smv-card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-}
-
-.smv-value {
-  font-family: 'Space Mono', monospace;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.smv-label {
-  font-size: 9px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-top: 2px;
-}
-
-.note-pending {
-  font-size: 10px;
-  color: var(--text-muted);
-  text-align: center;
-  font-style: italic;
-  padding: 8px 0;
-}
-
-/* ─── Responsive ─── */
-@media (max-width: 1100px) {
-  .summary-panel { display: none; }
-}
-
-@media (max-width: 700px) {
-  .config-panel { width: 280px; }
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --white: #ffffff;
+    --off-white: #f7f8fa;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.15);
+    --text-primary: #0a0a0a;
+    --text-secondary: #5a5a6e;
+    --text-muted: #9a9aaa;
+    --accent: #0047ff;
+    --accent-light: #e8eeff;
+    --accent-glow: rgba(0,71,255,0.12);
+    --danger: #e53935;
+    --success: #00c853;
+    --card-radius: 20px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--off-white);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── Background Grid ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,71,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,71,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Auth Overlay ─── */
+  #auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: white;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+
+  #auth-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .auth-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 56px 48px;
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+    position: relative;
+  }
+
+  .auth-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .auth-logo span.dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .auth-card h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .auth-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+
+  .btn-google {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    background: var(--text-primary);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    letter-spacing: 0.01em;
+  }
+
+  .btn-google:hover {
+    background: #1a1a2e;
+    transform: translateY(-1px);
+  }
+
+  .btn-google:active { transform: translateY(0); }
+
+  .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .auth-note {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ─── Access Denied ─── */
+  #access-denied {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-radius: 16px;
+    max-width: 400px;
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  #access-denied h3 { font-size: 16px; color: var(--danger); }
+  #access-denied p { font-size: 13px; color: #b91c1c; }
+
+  .btn-signout-small {
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+  }
+
+  .btn-signout-small:hover { background: var(--off-white); }
+
+  /* ─── Loading Spinner ─── */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Main Portal ─── */
+  #main-portal {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  #main-portal.visible { opacity: 1; }
+
+  /* ─── Top Nav ─── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 64px;
+    background: rgba(247, 248, 250, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-brand span.dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 8px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .user-avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .user-avatar-placeholder {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .btn-signout {
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .btn-signout:hover {
+    background: white;
+    border-color: var(--border-strong);
+  }
+
+  /* ─── Hero ─── */
+  .hero {
+    padding: 80px 48px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--accent-light);
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .hero-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .hero h1 {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 600;
+    line-height: 1.05;
+    color: var(--text-primary);
+    max-width: 700px;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    line-height: 1.7;
+  }
+
+  /* ─── Stats Row ─── */
+  .stats-row {
+    display: flex;
+    gap: 48px;
+    padding: 0 48px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ─── App Grid ─── */
+  .apps-section {
+    padding: 0 48px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  /* ─── App Card ─── */
+  .app-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 32px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .app-card:hover {
+    border-color: rgba(0,71,255,0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 60px rgba(0,71,255,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  }
+
+  .app-card:hover::before { opacity: 1; }
+
+  .app-card.featured {
+    border-color: rgba(0,71,255,0.15);
+    background: linear-gradient(135deg, #fafbff 0%, white 100%);
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .app-card.featured .card-content { flex: 1; }
+
+  .card-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .card-icon svg { width: 24px; height: 24px; }
+
+  .card-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 4px 10px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .card-badge.new {
+    background: #e8fdf0;
+    color: #00a844;
+  }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.06em;
+  }
+
+  .card-arrow {
+    margin-left: auto;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--off-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+  }
+
+  .app-card:hover .card-arrow {
+    background: var(--accent);
+  }
+
+  .app-card:hover .card-arrow svg path {
+    stroke: white;
+  }
+
+  /* ─── Coming Soon Card ─── */
+  .app-card.soon {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .card-badge.soon-badge {
+    background: #f5f5f5;
+    color: #999;
+  }
+
+  /* ─── Footer ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .footer-copy {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ─── Role Badge in Nav ─── */
+  .role-badge {
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .role-admin { background: #fff3cd; color: #b45309; }
+  .role-user  { background: var(--accent-light); color: var(--accent); }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 20px; }
+    .hero { padding: 48px 20px 40px; }
+    .stats-row { padding: 0 20px 40px; gap: 28px; flex-wrap: wrap; }
+    .apps-section { padding: 0 20px 60px; }
+    .apps-grid { grid-template-columns: 1fr; }
+    .app-card.featured { flex-direction: column; }
+    footer { padding: 24px 20px; flex-direction: column; gap: 8px; text-align: center; }
+  }
+
+  /* ─── Animate in ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .app-card {
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .app-card:nth-child(1) { animation-delay: 0.05s; }
+  .app-card:nth-child(2) { animation-delay: 0.1s; }
+  .app-card:nth-child(3) { animation-delay: 0.15s; }
+  .app-card:nth-child(4) { animation-delay: 0.2s; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
-  <a href="../index.html" class="back-btn">
-    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-      <path d="M9 11L5 7l4-4"/>
-    </svg>
-    Portal
-  </a>
-  <div class="header-center">
-    <div class="header-title">Glove Custom Builder</div>
-    <div class="header-subtitle">Adira Semesta Industry</div>
-  </div>
-  <div class="header-actions">
-    <button class="btn-outline" onclick="resetConfig()">Reset</button>
-    <button class="btn-outline" onclick="saveDesign()">Save Draft</button>
-    <button class="btn-primary" onclick="exportSummary()">Export PDF</button>
-  </div>
-</header>
-
-<!-- Main Body -->
-<div class="app-body">
-
-  <!-- ─── Config Panel ─── -->
-  <div class="config-panel">
-    <div class="tab-nav" id="tab-nav">
-      <button class="tab-btn active" onclick="switchTab('structure')">Structure</button>
-      <button class="tab-btn" onclick="switchTab('sew')">Sew Method</button>
-      <button class="tab-btn" onclick="switchTab('material')">Material</button>
-      <button class="tab-btn" onclick="switchTab('color')">Color</button>
-      <button class="tab-btn" onclick="switchTab('print')">Print & Logo</button>
+<!-- ─── Auth Overlay ─── -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="dot"></span>
+      Adira Semesta Industry
     </div>
+    <h1>Internal Portal</h1>
+    <p>Sign in with your authorized Google Account to access the workspace.</p>
 
-    <div class="config-scroll">
+    <button class="btn-google" id="btn-login" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      <span id="btn-login-text">Continue with Google</span>
+      <div class="spinner" id="login-spinner"></div>
+    </button>
 
-      <!-- ─── STRUCTURE TAB ─── -->
-      <div class="tab-pane active" id="tab-structure">
+    <p class="auth-note">Access is restricted to authorized personnel only.</p>
 
-        <div class="config-group">
-          <div class="group-label">Body</div>
-          <div class="option-chips" id="chips-body">
-            <div class="chip selected" onclick="selectChip(this,'body')">Full</div>
-            <div class="chip" onclick="selectChip(this,'body')">Combination</div>
-          </div>
-        </div>
+    <div id="access-denied">
+      <h3>Access Denied</h3>
+      <p id="denied-msg">Your account is not authorized to access this portal.</p>
+      <button class="btn-signout-small" onclick="signOut()">Sign out & try another account</button>
+    </div>
+  </div>
+</div>
 
-        <div class="config-group">
-          <div class="group-label">Thumb</div>
-          <div class="option-chips" id="chips-thumb">
-            <div class="chip selected" onclick="selectChip(this,'thumb')">Full</div>
-            <div class="chip" onclick="selectChip(this,'thumb')">Combination</div>
-          </div>
-        </div>
+<!-- ─── Main Portal ─── -->
+<div id="main-portal">
 
-        <div class="config-group">
-          <div class="group-label">Knuckle</div>
-          <div class="option-chips" id="chips-knuckle">
-            <div class="chip" onclick="selectChip(this,'knuckle')">1</div>
-            <div class="chip" onclick="selectChip(this,'knuckle')">2</div>
-            <div class="chip selected" onclick="selectChip(this,'knuckle')">3</div>
-            <div class="chip" onclick="selectChip(this,'knuckle')">4</div>
-            <div class="chip" onclick="selectChip(this,'knuckle')">5</div>
-          </div>
-        </div>
+  <!-- Nav -->
+  <nav>
+    <div class="nav-brand">
+      <span class="dot"></span>
+      Adira Semesta
+    </div>
+    <div class="nav-right">
+      <div class="user-chip">
+        <img class="user-avatar" id="user-photo" src="" alt="" onerror="this.style.display='none'; document.getElementById('user-initials').style.display='flex';">
+        <div class="user-avatar-placeholder" id="user-initials" style="display:none;"></div>
+        <span id="user-name">—</span>
+      </div>
+      <span class="role-badge" id="role-badge"></span>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </nav>
 
-        <div class="config-group">
-          <div class="group-label">Gusset</div>
-          <div class="option-chips" id="chips-gusset">
-            <div class="chip selected" onclick="selectChip(this,'gusset')">Combination</div>
-            <div class="chip" onclick="selectChip(this,'gusset')">Combination Reinforce</div>
-            <div class="chip" onclick="selectChip(this,'gusset')">Full Stitchless</div>
-            <div class="chip" onclick="selectChip(this,'gusset')">Hole Stitchless</div>
-          </div>
-        </div>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-label">Industry Operations Portal</div>
+    <h1>Your workspace,<br><em>reimagined.</em></h1>
+    <p>All tools and applications for Adira Semesta Industry operations, accessible in one place.</p>
+  </div>
 
-        <div class="config-group">
-          <div class="group-label">Tab Pattern</div>
-          <div class="option-chips" id="chips-tab">
-            <div class="chip" onclick="selectChip(this,'tab')">1</div>
-            <div class="chip selected" onclick="selectChip(this,'tab')">2</div>
-            <div class="chip" onclick="selectChip(this,'tab')">3</div>
-            <div class="chip" onclick="selectChip(this,'tab')">4</div>
-            <div class="chip" onclick="selectChip(this,'tab')">5</div>
-          </div>
-        </div>
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <span class="stat-value" id="stat-apps">1</span>
+      <span class="stat-label">Active Apps</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">24/7</span>
+      <span class="stat-label">Uptime</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-role-display">—</span>
+      <span class="stat-label">Your Access Level</span>
+    </div>
+  </div>
 
-        <div class="config-group">
-          <div class="group-label">Puller Pattern</div>
-          <div class="option-chips" id="chips-puller">
-            <div class="chip" onclick="selectChip(this,'puller')">1</div>
-            <div class="chip selected" onclick="selectChip(this,'puller')">2</div>
-            <div class="chip" onclick="selectChip(this,'puller')">3</div>
-            <div class="chip" onclick="selectChip(this,'puller')">4</div>
-            <div class="chip" onclick="selectChip(this,'puller')">5</div>
-          </div>
-        </div>
+  <!-- Apps -->
+  <div class="apps-section">
+    <div class="section-header">
+      <span class="section-title">Applications</span>
+    </div>
+    <div class="apps-grid">
 
-        <div class="config-group">
-          <div class="group-label">Palm Patch</div>
-          <div class="option-chips" id="chips-palm-patch">
-            <div class="chip" onclick="selectChip(this,'palm-patch')">1</div>
-            <div class="chip selected" onclick="selectChip(this,'palm-patch')">2</div>
-            <div class="chip" onclick="selectChip(this,'palm-patch')">3</div>
-            <div class="chip" onclick="selectChip(this,'palm-patch')">4</div>
-            <div class="chip" onclick="selectChip(this,'palm-patch')">5</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Palm Padding</div>
-          <div class="option-chips" id="chips-palm-padding">
-            <div class="chip" onclick="selectChip(this,'palm-padding')">1</div>
-            <div class="chip" onclick="selectChip(this,'palm-padding')">2</div>
-            <div class="chip selected" onclick="selectChip(this,'palm-padding')">3</div>
-            <div class="chip" onclick="selectChip(this,'palm-padding')">4</div>
-            <div class="chip" onclick="selectChip(this,'palm-padding')">5</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Piping</div>
-          <div class="option-chips" id="chips-piping">
-            <div class="chip selected" onclick="selectChip(this,'piping')">Normal</div>
-            <div class="chip" onclick="selectChip(this,'piping')">Inside Out</div>
-          </div>
-        </div>
-
-      </div><!-- /tab-structure -->
-
-      <!-- ─── SEW METHOD TAB ─── -->
-      <div class="tab-pane" id="tab-sew">
-
-        <div class="config-group">
-          <div class="group-label">Tab Method</div>
-          <div class="option-chips" id="chips-tab-method">
-            <div class="chip selected" onclick="selectChip(this,'tab-method')">Full</div>
-            <div class="chip" onclick="selectChip(this,'tab-method')">Inlay</div>
-            <div class="chip" onclick="selectChip(this,'tab-method')">Direct</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Tab Sew</div>
-          <div class="option-chips" id="chips-tab-sew">
-            <div class="chip selected" onclick="selectChip(this,'tab-sew')">2 Needle</div>
-            <div class="chip" onclick="selectChip(this,'tab-sew')">Piping</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Puller Method</div>
-          <div class="option-chips" id="chips-puller-method">
-            <div class="chip selected" onclick="selectChip(this,'puller-method')">TPR</div>
-            <div class="chip" onclick="selectChip(this,'puller-method')">Deboss</div>
-            <div class="chip" onclick="selectChip(this,'puller-method')">2D Print</div>
-            <div class="chip" onclick="selectChip(this,'puller-method')">DTF</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Gusset Sew</div>
-          <div class="option-chips" id="chips-gusset-sew">
-            <div class="chip selected" onclick="selectChip(this,'gusset-sew')">Inside</div>
-            <div class="chip" onclick="selectChip(this,'gusset-sew')">Back Outside</div>
-            <div class="chip" onclick="selectChip(this,'gusset-sew')">Palm Outside</div>
-          </div>
-        </div>
-
-      </div><!-- /tab-sew -->
-
-      <!-- ─── MATERIAL TAB ─── -->
-      <div class="tab-pane" id="tab-material">
-
-        <div class="config-group">
-          <div class="group-label">Body Material</div>
-          <div class="material-grid" id="mat-body">
-            <div class="mat-card selected" onclick="selectMat(this,'mat-body')" data-mat="genuine-leather">
-              <div class="mat-swatch" style="background: #8B6F47;"></div>
-              <div class="mat-name">Genuine Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="synthetic-leather">
-              <div class="mat-swatch" style="background: #c4a882;"></div>
-              <div class="mat-name">Synthetic Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="synthetic">
-              <div class="mat-swatch" style="background: #b0b8c8;"></div>
-              <div class="mat-name">Synthetic</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="suede">
-              <div class="mat-swatch" style="background: #9e8070;"></div>
-              <div class="mat-name">Suede</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="lycra">
-              <div class="mat-swatch" style="background: #7090c0;"></div>
-              <div class="mat-name">Lycra</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="mesh">
-              <div class="mat-swatch" style="background: repeating-linear-gradient(45deg,#ddd 0,#ddd 2px,#f5f5f5 0,#f5f5f5 8px);"></div>
-              <div class="mat-name">Mesh</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="stretch-fabric">
-              <div class="mat-swatch" style="background: #8090a8;"></div>
-              <div class="mat-name">Stretch Fabric</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Palm Material</div>
-          <div class="material-grid" id="mat-palm">
-            <div class="mat-card selected" onclick="selectMat(this,'mat-palm')" data-mat="genuine-leather">
-              <div class="mat-swatch" style="background: #8B6F47;"></div>
-              <div class="mat-name">Genuine Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-palm')" data-mat="synthetic-leather">
-              <div class="mat-swatch" style="background: #c4a882;"></div>
-              <div class="mat-name">Synthetic Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-palm')" data-mat="suede">
-              <div class="mat-swatch" style="background: #9e8070;"></div>
-              <div class="mat-name">Suede</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-palm')" data-mat="synthetic">
-              <div class="mat-swatch" style="background: #b0b8c8;"></div>
-              <div class="mat-name">Synthetic</div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /tab-material -->
-
-      <!-- ─── COLOR TAB ─── -->
-      <div class="tab-pane" id="tab-color">
-
-        <div class="config-group">
-          <div class="group-label">Body Color</div>
-          <div class="color-swatches" id="sw-body-color">
-            <div class="swatch selected" style="background:#f8f4ee;" onclick="selectSwatch(this,'sw-body-color','body')" title="Pearl White"></div>
-            <div class="swatch" style="background:#f5f2ec;" onclick="selectSwatch(this,'sw-body-color','body')" title="Off White"></div>
-            <div class="swatch" style="background:#f9f9f9;" onclick="selectSwatch(this,'sw-body-color','body')" title="Snow White"></div>
-            <div class="swatch" style="background:#8a8a8a;" onclick="selectSwatch(this,'sw-body-color','body')" title="Gray"></div>
-            <div class="swatch" style="background:#1a1a1a;" onclick="selectSwatch(this,'sw-body-color','body')" title="Black"></div>
-          </div>
-          <div style="margin-top:8px;">
-            <span id="body-color-name" style="font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace;">Pearl White</span>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Palm Color</div>
-          <div class="color-swatches" id="sw-palm-color">
-            <div class="swatch selected" style="background:#f8f4ee;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Pearl White"></div>
-            <div class="swatch" style="background:#f5f2ec;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Off White"></div>
-            <div class="swatch" style="background:#f9f9f9;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Snow White"></div>
-            <div class="swatch" style="background:#8a8a8a;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Gray"></div>
-            <div class="swatch" style="background:#1a1a1a;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Black"></div>
-          </div>
-          <div style="margin-top:8px;">
-            <span id="palm-color-name" style="font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace;">Pearl White</span>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Piping Color</div>
-          <div class="color-swatches" id="sw-piping-color">
-            <div class="swatch" style="background:#f8f4ee;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Pearl White"></div>
-            <div class="swatch" style="background:#f5f2ec;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Off White"></div>
-            <div class="swatch" style="background:#f9f9f9;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Snow White"></div>
-            <div class="swatch selected" style="background:#8a8a8a;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Gray"></div>
-            <div class="swatch" style="background:#1a1a1a;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Black"></div>
-          </div>
-          <div style="margin-top:8px;">
-            <span id="piping-color-name" style="font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace;">Gray</span>
-          </div>
-        </div>
-
-      </div><!-- /tab-color -->
-
-      <!-- ─── PRINT & LOGO TAB ─── -->
-      <div class="tab-pane" id="tab-print">
-
-        <div class="config-group">
-          <div class="group-label">Printing – Body</div>
-          <div class="option-chips" id="chips-print-body">
-            <div class="chip selected" onclick="selectChip(this,'print-body')">3D Print</div>
-            <div class="chip" onclick="selectChip(this,'print-body')">2D Print</div>
-            <div class="chip" onclick="selectChip(this,'print-body')">Digital Print</div>
-            <div class="chip" onclick="selectChip(this,'print-body')">DTF</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Logo – Tab Style</div>
-          <div class="option-chips" id="chips-logo-tab">
-            <div class="chip selected" onclick="selectChip(this,'logo-tab')">Full</div>
-            <div class="chip" onclick="selectChip(this,'logo-tab')">Combination</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Logo – Method</div>
-          <div class="option-chips" id="chips-logo-method">
-            <div class="chip" onclick="selectChip(this,'logo-method')">3D Print</div>
-            <div class="chip selected" onclick="selectChip(this,'logo-method')">2D Print</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">Digital Print</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">DTF</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">Embroidery</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">Woven</div>
-          </div>
-        </div>
-
-        <div class="config-group">
-          <div class="group-label">Upload Logo File</div>
-          <label style="display:block; padding:16px; background:var(--off-white); border:1px dashed rgba(0,71,255,0.2); border-radius:12px; text-align:center; cursor:pointer; font-size:12px; color:var(--text-secondary);" for="logo-upload">
-            Click to upload logo (PNG/SVG)
-          </label>
-          <input type="file" id="logo-upload" accept=".png,.svg,.jpg" style="display:none;" onchange="handleLogoUpload(event)">
-          <div id="logo-preview" style="margin-top:10px; display:none; text-align:center;">
-            <img id="logo-img" src="" style="max-height:60px; max-width:100%; border-radius:8px;">
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;" id="logo-filename"></p>
-          </div>
-        </div>
-
-      </div><!-- /tab-print -->
-
-    </div><!-- /config-scroll -->
-  </div><!-- /config-panel -->
-
-  <!-- ─── 3D Viewport ─── -->
-  <div class="viewport" id="viewport">
-    <div class="viewport-bg-grid"></div>
-
-    <!-- Model upload overlay -->
-    <div class="model-upload-overlay" id="upload-overlay">
-      <div class="upload-box" onclick="document.getElementById('model-file-input').click()">
-        <div class="upload-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
+      <!-- Glove Builder — FEATURED -->
+      <a href="./glove-builder/index.html" class="app-card featured">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0047ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+            <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+            <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
           </svg>
         </div>
-        <div class="upload-title">Load 3D Glove Model</div>
-        <div class="upload-desc">Upload your OBJ, GLB, or FBX file to display the glove in 3D. The model will respond to all configuration changes.</div>
-        <div class="upload-formats">OBJ · GLB · GLTF · FBX</div>
+        <div class="card-badge new">New</div>
+        <div class="card-content">
+          <div class="card-title">Glove Custom Builder</div>
+          <div class="card-desc">Design custom gloves from scratch — configure every part, material, color, print method, and logo. Get real-time SMV, consumption & costing estimates.</div>
+          <div class="card-meta">
+            <span class="card-tag">3D VIEWER</span>
+            <span class="card-tag">AUTO COSTING</span>
+            <span class="card-tag">EXPORT PDF</span>
+            <div class="card-arrow">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="#0a0a0a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Coming Soon Cards -->
+      <div class="app-card soon">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0047ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="2"/>
+            <path d="M9 12h6M9 16h4"/>
+          </svg>
+        </div>
+        <div class="card-badge soon-badge">Soon</div>
+        <div class="card-title">Order Management</div>
+        <div class="card-desc">Track and manage production orders, timelines, and delivery status in real time.</div>
+        <div class="card-meta">
+          <span class="card-tag">Coming Q3 2025</span>
+        </div>
       </div>
-      <p style="font-size:12px; color:var(--text-muted);">or <span style="color:var(--accent); cursor:pointer; text-decoration:underline;" onclick="loadDemoModel()">use a demo placeholder</span> while your model is ready</p>
-    </div>
 
-    <input type="file" id="model-file-input" accept=".obj,.glb,.gltf,.fbx" onchange="loadModel(event)">
+      <div class="app-card soon">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0047ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h18v18H3zM3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div class="card-badge soon-badge">Soon</div>
+        <div class="card-title">Inventory Tracker</div>
+        <div class="card-desc">Monitor raw material stock levels, reorder points, and consumption history.</div>
+        <div class="card-meta">
+          <span class="card-tag">Coming Q4 2025</span>
+        </div>
+      </div>
 
-    <!-- Canvas -->
-    <canvas id="three-canvas"></canvas>
-
-    <!-- Viewport UI -->
-    <div class="viewport-label">3D Viewer · Drag to Rotate</div>
-
-    <div class="viewport-controls">
-      <button class="vp-btn" onclick="resetCamera()" title="Reset camera">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <path d="M2 8a6 6 0 1 0 1.5-4"/>
-          <path d="M2 3v4h4"/>
-        </svg>
-      </button>
-      <button class="vp-btn" onclick="toggleAutoRotate()" title="Auto rotate" id="rotate-btn">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <path d="M8 2a6 6 0 1 1-4.24 1.76"/>
-          <path d="M2 5l1.76-3L5 5"/>
-        </svg>
-      </button>
-      <button class="vp-btn" onclick="zoomIn()" title="Zoom in">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <circle cx="7" cy="7" r="4"/><path d="M11 11l2.5 2.5M7 5v4M5 7h4"/>
-        </svg>
-      </button>
-      <button class="vp-btn" onclick="zoomOut()" title="Zoom out">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <circle cx="7" cy="7" r="4"/><path d="M11 11l2.5 2.5M5 7h4"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="viewport-hint">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2">
-        <circle cx="7" cy="7" r="5"/><path d="M7 4v3l2 2"/>
-      </svg>
-      Drag to rotate · Scroll to zoom
     </div>
   </div>
 
-  <!-- ─── Summary Panel ─── -->
-  <div class="summary-panel">
-    <div class="summary-header">
-      <div class="summary-title">Design Summary</div>
-    </div>
-    <div class="summary-scroll">
+  <footer>
+    <div class="footer-brand">Adira Semesta Industry</div>
+    <div class="footer-copy">© 2025 · Internal use only</div>
+  </footer>
 
-      <div class="summary-section">
-        <div class="summary-section-title">Structure</div>
-        <div class="summary-row"><span class="summary-key">Body</span><span class="summary-val" id="sum-body">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Thumb</span><span class="summary-val" id="sum-thumb">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Knuckle</span><span class="summary-val" id="sum-knuckle">3</span></div>
-        <div class="summary-row"><span class="summary-key">Gusset</span><span class="summary-val" id="sum-gusset">Combination</span></div>
-        <div class="summary-row"><span class="summary-key">Tab</span><span class="summary-val" id="sum-tab">2</span></div>
-        <div class="summary-row"><span class="summary-key">Puller</span><span class="summary-val" id="sum-puller">2</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Patch</span><span class="summary-val" id="sum-palm-patch">2</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Padding</span><span class="summary-val" id="sum-palm-padding">3</span></div>
-        <div class="summary-row"><span class="summary-key">Piping</span><span class="summary-val" id="sum-piping">Normal</span></div>
-      </div>
+</div>
 
-      <div class="summary-section">
-        <div class="summary-section-title">Sew Methods</div>
-        <div class="summary-row"><span class="summary-key">Tab Method</span><span class="summary-val" id="sum-tab-method">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Tab Sew</span><span class="summary-val" id="sum-tab-sew">2 Needle</span></div>
-        <div class="summary-row"><span class="summary-key">Puller Method</span><span class="summary-val" id="sum-puller-method">TPR</span></div>
-        <div class="summary-row"><span class="summary-key">Gusset Sew</span><span class="summary-val" id="sum-gusset-sew">Inside</span></div>
-      </div>
+<!-- ─── Firebase ─── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-      <div class="summary-section">
-        <div class="summary-section-title">Material & Color</div>
-        <div class="summary-row"><span class="summary-key">Body Mat.</span><span class="summary-val" id="sum-mat-body">Genuine Leather</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Mat.</span><span class="summary-val" id="sum-mat-palm">Genuine Leather</span></div>
-        <div class="summary-row"><span class="summary-key">Body Color</span><span class="summary-val" id="sum-body-color">Pearl White</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Color</span><span class="summary-val" id="sum-palm-color">Pearl White</span></div>
-        <div class="summary-row"><span class="summary-key">Piping Color</span><span class="summary-val" id="sum-piping-color">Gray</span></div>
-      </div>
-
-      <div class="summary-section">
-        <div class="summary-section-title">Print & Logo</div>
-        <div class="summary-row"><span class="summary-key">Body Print</span><span class="summary-val" id="sum-print-body">3D Print</span></div>
-        <div class="summary-row"><span class="summary-key">Logo Tab</span><span class="summary-val" id="sum-logo-tab">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Logo Method</span><span class="summary-val" id="sum-logo-method">2D Print</span></div>
-      </div>
-
-    </div><!-- /summary-scroll -->
-
-    <!-- Costing Box -->
-    <div class="costing-box">
-      <div class="costing-title">Estimation</div>
-      <p class="note-pending" id="costing-note">Formula will be configured by admin. Values below are indicative.</p>
-      <div class="smv-row">
-        <div class="smv-card">
-          <div class="smv-value" id="est-smv">—</div>
-          <div class="smv-label">SMV (min)</div>
-        </div>
-        <div class="smv-card">
-          <div class="smv-value" id="est-consumption">—</div>
-          <div class="smv-label">Consumption</div>
-        </div>
-      </div>
-      <div class="costing-row"><span class="costing-label">Material</span><span class="costing-value" id="cost-material">—</span></div>
-      <div class="costing-row"><span class="costing-label">Labor</span><span class="costing-value" id="cost-labor">—</span></div>
-      <div class="costing-row"><span class="costing-label">Print & Logo</span><span class="costing-value" id="cost-print">—</span></div>
-      <div class="costing-row"><span class="costing-label">Overhead</span><span class="costing-value" id="cost-overhead">—</span></div>
-      <div class="costing-row total">
-        <span class="costing-label">Est. Total</span>
-        <span class="costing-value" id="cost-total">—</span>
-      </div>
-    </div>
-
-  </div><!-- /summary-panel -->
-
-</div><!-- /app-body -->
-
-<script>
-// ─── State ───────────────────────────────────────────────
-const config = {
-  body: 'Full', thumb: 'Full', knuckle: '3', gusset: 'Combination',
-  tab: '2', 'tab-method': 'Full', 'tab-sew': '2 Needle',
-  puller: '2', 'puller-method': 'TPR', piping: 'Normal',
-  'palm-patch': '2', 'palm-padding': '3', 'gusset-sew': 'Inside',
-  'print-body': '3D Print', 'logo-tab': 'Full', 'logo-method': '2D Print',
-  'mat-body': 'Genuine Leather', 'mat-palm': 'Genuine Leather',
-  'body-color': 'Pearl White', 'palm-color': 'Pearl White', 'piping-color': 'Gray',
-  'body-hex': '#f8f4ee', 'palm-hex': '#f8f4ee', 'piping-hex': '#8a8a8a'
-};
-
-// ─── Tab switching ────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    const tabs = ['structure','sew','material','color','print'];
-    b.classList.toggle('active', tabs[i] === name);
-  });
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-}
-
-// ─── Chip selection ───────────────────────────────────────
-function selectChip(el, key) {
-  const parent = el.closest('.option-chips');
-  parent.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  config[key] = el.textContent.trim();
-  updateSummary();
-  updateModel();
-}
-
-// ─── Material selection ───────────────────────────────────
-function selectMat(el, groupId) {
-  const parent = el.closest('.material-grid');
-  parent.querySelectorAll('.mat-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  const key = groupId === 'mat-body' ? 'mat-body' : 'mat-palm';
-  config[key] = el.querySelector('.mat-name').textContent;
-  updateSummary();
-  updateModel();
-}
-
-// ─── Swatch selection ─────────────────────────────────────
-const colorNames = {
-  '#f8f4ee': 'Pearl White', '#f5f2ec': 'Off White',
-  '#f9f9f9': 'Snow White', '#8a8a8a': 'Gray', '#1a1a1a': 'Black'
-};
-
-function selectSwatch(el, groupId, colorKey) {
-  const parent = document.getElementById(groupId);
-  parent.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  const hex = el.style.background;
-  const name = el.title;
-  config[colorKey] = name;
-  const hexKey = colorKey + '-hex';
-  config[hexKey] = hex;
-  document.getElementById(colorKey + '-name') && (document.getElementById(colorKey + '-name').textContent = name);
-  updateSummary();
-  updateModelColors();
-}
-
-// ─── Logo upload ──────────────────────────────────────────
-function handleLogoUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('logo-img').src = e.target.result;
-    document.getElementById('logo-filename').textContent = file.name;
-    document.getElementById('logo-preview').style.display = 'block';
+  // ── REPLACE THESE WITH YOUR FIREBASE CONFIG ──
+  const firebaseConfig = {
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
-  reader.readAsDataURL(file);
-}
+  // ─────────────────────────────────────────────
 
-// ─── Summary update ───────────────────────────────────────
-function updateSummary() {
-  const map = {
-    'sum-body': config.body, 'sum-thumb': config.thumb,
-    'sum-knuckle': config.knuckle, 'sum-gusset': config.gusset,
-    'sum-tab': config.tab, 'sum-puller': config.puller,
-    'sum-palm-patch': config['palm-patch'], 'sum-palm-padding': config['palm-padding'],
-    'sum-piping': config.piping,
-    'sum-tab-method': config['tab-method'], 'sum-tab-sew': config['tab-sew'],
-    'sum-puller-method': config['puller-method'], 'sum-gusset-sew': config['gusset-sew'],
-    'sum-mat-body': config['mat-body'], 'sum-mat-palm': config['mat-palm'],
-    'sum-body-color': config['body-color'], 'sum-palm-color': config['palm-color'],
-    'sum-piping-color': config['piping-color'],
-    'sum-print-body': config['print-body'],
-    'sum-logo-tab': config['logo-tab'], 'sum-logo-method': config['logo-method']
-  };
-  for (const [id, val] of Object.entries(map)) {
-    const el = document.getElementById(id);
-    if (el) { el.textContent = val || '—'; el.classList.toggle('empty', !val); }
-  }
-  // Placeholder costing — admin will replace with real formula
-  document.getElementById('est-smv').textContent = '—';
-  document.getElementById('est-consumption').textContent = '—';
-  document.getElementById('cost-material').textContent = 'TBD';
-  document.getElementById('cost-labor').textContent = 'TBD';
-  document.getElementById('cost-print').textContent = 'TBD';
-  document.getElementById('cost-overhead').textContent = 'TBD';
-  document.getElementById('cost-total').textContent = 'TBD';
-}
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  const provider = new GoogleAuthProvider();
 
-// ─── Reset ────────────────────────────────────────────────
-function resetConfig() {
-  if (!confirm('Reset all selections to default?')) return;
-  location.reload();
-}
-
-// ─── Save/Export stubs ────────────────────────────────────
-function saveDesign() {
-  const data = JSON.stringify(config, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'glove-design-' + Date.now() + '.json';
-  a.click();
-}
-
-function exportSummary() {
-  window.print();
-}
-
-// ─── THREE.JS 3D VIEWER ───────────────────────────────────
-let scene, camera, renderer, gloveGroup, autoRotate = false;
-let isDragging = false, prevMouse = { x: 0, y: 0 };
-let bodyMesh = null, palmMesh = null;
-
-function initThree() {
-  const canvas = document.getElementById('three-canvas');
-  const vp = document.getElementById('viewport');
-
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
-
-  scene = new THREE.Scene();
-  scene.background = null;
-
-  const w = vp.clientWidth, h = vp.clientHeight;
-  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
-  camera.position.set(0, 0.5, 3.5);
-
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
-
-  const key = new THREE.DirectionalLight(0xffffff, 1.2);
-  key.position.set(3, 5, 4);
-  key.castShadow = true;
-  scene.add(key);
-
-  const fill = new THREE.DirectionalLight(0xe8eeff, 0.5);
-  fill.position.set(-3, 2, -2);
-  scene.add(fill);
-
-  const rim = new THREE.DirectionalLight(0xffffff, 0.3);
-  rim.position.set(0, -3, -4);
-  scene.add(rim);
-
-  gloveGroup = new THREE.Group();
-  scene.add(gloveGroup);
-
-  resizeRenderer();
-  animate();
-
-  // Drag to rotate
-  canvas.addEventListener('mousedown', e => {
-    isDragging = true;
-    prevMouse = { x: e.clientX, y: e.clientY };
-  });
-  window.addEventListener('mousemove', e => {
-    if (!isDragging || !gloveGroup) return;
-    const dx = (e.clientX - prevMouse.x) * 0.008;
-    const dy = (e.clientY - prevMouse.y) * 0.008;
-    gloveGroup.rotation.y += dx;
-    gloveGroup.rotation.x += dy;
-    prevMouse = { x: e.clientX, y: e.clientY };
-  });
-  window.addEventListener('mouseup', () => isDragging = false);
-
-  // Touch
-  let lastTouch = null;
-  canvas.addEventListener('touchstart', e => {
-    lastTouch = e.touches[0];
-  });
-  canvas.addEventListener('touchmove', e => {
-    if (!lastTouch || !gloveGroup) return;
-    const t = e.touches[0];
-    gloveGroup.rotation.y += (t.clientX - lastTouch.clientX) * 0.01;
-    gloveGroup.rotation.x += (t.clientY - lastTouch.clientY) * 0.01;
-    lastTouch = t;
-    e.preventDefault();
-  }, { passive: false });
-
-  // Scroll to zoom
-  canvas.addEventListener('wheel', e => {
-    camera.position.z = Math.max(1.5, Math.min(8, camera.position.z + e.deltaY * 0.005));
-    e.preventDefault();
-  }, { passive: false });
-
-  window.addEventListener('resize', resizeRenderer);
-}
-
-function resizeRenderer() {
-  const vp = document.getElementById('viewport');
-  const w = vp.clientWidth, h = vp.clientHeight;
-  renderer.setSize(w, h);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-  if (autoRotate && gloveGroup) gloveGroup.rotation.y += 0.005;
-  renderer.render(scene, camera);
-}
-
-// ─── Demo Model (placeholder glove shape) ─────────────────
-function loadDemoModel() {
-  document.getElementById('upload-overlay').classList.add('hidden');
-
-  // Clear existing
-  while (gloveGroup.children.length) gloveGroup.remove(gloveGroup.children[0]);
-
-  const bodyColor = new THREE.Color(config['body-hex'] || '#f8f4ee');
-  const palmColor = new THREE.Color(config['palm-hex'] || '#f8f4ee');
-
-  // Body material (PBR)
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: bodyColor,
-    roughness: 0.6,
-    metalness: 0.0,
-  });
-
-  const palmMat = new THREE.MeshStandardMaterial({
-    color: palmColor,
-    roughness: 0.8,
-    metalness: 0.0,
-  });
-
-  // Glove Body (stylized approximation)
-  const bodyGeo = new THREE.CylinderGeometry(0.42, 0.48, 1.4, 32, 4, false);
-  bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-  bodyMesh.position.set(0, 0, 0);
-  bodyMesh.castShadow = true;
-  gloveGroup.add(bodyMesh);
-
-  // Wrist/cuff
-  const cuffGeo = new THREE.CylinderGeometry(0.52, 0.48, 0.5, 32);
-  const cuff = new THREE.Mesh(cuffGeo, bodyMat);
-  cuff.position.set(0, -0.95, 0);
-  gloveGroup.add(cuff);
-
-  // Palm patch
-  palmMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6, 0.7, 0.1),
-    palmMat
-  );
-  palmMesh.position.set(0, -0.1, 0.44);
-  gloveGroup.add(palmMesh);
-
-  // Fingers (4)
-  const fingerPositions = [[-0.28,0.95,0],[−0.09,1.05,0],[0.10,1.05,0],[0.29,0.95,0]];
-  // Fix: use actual numbers
-  const fPos = [[-0.28,0.95,0],[-0.09,1.05,0],[0.10,1.05,0],[0.29,0.95,0]];
-  fPos.forEach(([x,y,z]) => {
-    const fg = new THREE.CylinderGeometry(0.09, 0.11, 0.65, 16);
-    const fm = new THREE.Mesh(fg, bodyMat);
-    fm.position.set(x, y, z);
-    gloveGroup.add(fm);
-    // Fingertip
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 8), bodyMat);
-    tip.position.set(x, y + 0.33, z);
-    gloveGroup.add(tip);
-  });
-
-  // Thumb
-  const thumbGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.55, 16);
-  const thumb = new THREE.Mesh(thumbGeo, bodyMat);
-  thumb.rotation.z = Math.PI / 4;
-  thumb.position.set(-0.56, 0.6, 0.1);
-  gloveGroup.add(thumb);
-  const thumbTip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 8), bodyMat);
-  thumbTip.position.set(-0.72, 0.78, 0.1);
-  gloveGroup.add(thumbTip);
-
-  // Gussets (knuckle accents)
-  for (let i = 0; i < 4; i++) {
-    const x = -0.28 + i * 0.19;
-    const kg = new THREE.BoxGeometry(0.15, 0.04, 0.18);
-    const km = new THREE.Mesh(kg, new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.5 }));
-    km.position.set(x, 0.72, 0.35);
-    gloveGroup.add(km);
-  }
-
-  // Tab (wrist strap)
-  const tabGeo = new THREE.BoxGeometry(0.3, 0.12, 0.06);
-  const tabMat = new THREE.MeshStandardMaterial({ color: 0x0047ff, roughness: 0.5 });
-  const tab = new THREE.Mesh(tabGeo, tabMat);
-  tab.position.set(0.38, -1.16, 0.1);
-  gloveGroup.add(tab);
-
-  gloveGroup.position.set(0, -0.2, 0);
-  autoRotate = true;
-}
-
-// ─── Load real 3D model ────────────────────────────────────
-function loadModel(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  const url = URL.createObjectURL(file);
-
-  document.getElementById('upload-overlay').classList.add('hidden');
-  while (gloveGroup.children.length) gloveGroup.remove(gloveGroup.children[0]);
-
-  if (ext === 'glb' || ext === 'gltf') {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
-    script.onload = () => {
-      const loader = new THREE.GLTFLoader();
-      loader.load(url, gltf => {
-        gltf.scene.traverse(child => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            bodyMesh = child;
-          }
-        });
-        gloveGroup.add(gltf.scene);
-        fitCamera();
-        updateModelColors();
-      });
-    };
-    document.head.appendChild(script);
-  } else if (ext === 'obj') {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js';
-    script.onload = () => {
-      const loader = new THREE.OBJLoader();
-      loader.load(url, obj => {
-        obj.traverse(child => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.material = new THREE.MeshStandardMaterial({ color: 0xf8f4ee, roughness: 0.6 });
-            bodyMesh = child;
-          }
-        });
-        gloveGroup.add(obj);
-        fitCamera();
-        updateModelColors();
-      });
-    };
-    document.head.appendChild(script);
-  } else {
-    alert('Please use OBJ, GLB, or GLTF format. FBX requires additional server setup.');
-    document.getElementById('upload-overlay').classList.remove('hidden');
-  }
-}
-
-function fitCamera() {
-  const box = new THREE.Box3().setFromObject(gloveGroup);
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z);
-  camera.position.z = maxDim * 2;
-  gloveGroup.position.sub(center);
-}
-
-// ─── Update model colors when color changes ────────────────
-function updateModelColors() {
-  if (!gloveGroup || gloveGroup.children.length === 0) return;
-  const bodyHex = config['body-hex'] || '#f8f4ee';
-  gloveGroup.traverse(child => {
-    if (child.isMesh && child !== palmMesh) {
-      if (child.material && !child.material._isPiping) {
-        child.material.color = new THREE.Color(bodyHex);
-      }
+  window.signInWithGoogle = async () => {
+    const btn     = document.getElementById('btn-login');
+    const spinner = document.getElementById('login-spinner');
+    const btnText = document.getElementById('btn-login-text');
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Signing in…';
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Continue with Google';
     }
+  };
+
+  window.signOut = async () => {
+    await fbSignOut(auth);
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    const overlay = document.getElementById('auth-overlay');
+    const portal  = document.getElementById('main-portal');
+    const denied  = document.getElementById('access-denied');
+
+    if (!user) {
+      overlay.classList.remove('hidden');
+      portal.classList.remove('visible');
+      denied.style.display = 'none';
+      // Reset button
+      document.getElementById('btn-login').disabled = false;
+      document.getElementById('login-spinner').style.display = 'none';
+      document.getElementById('btn-login-text').textContent = 'Continue with Google';
+      return;
+    }
+
+    // Check Firestore whitelist
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+    if (!userDoc.exists() || !userDoc.data().active) {
+      denied.style.display = 'flex';
+      document.getElementById('denied-msg').textContent =
+        `${user.email} is not authorized. Contact your administrator.`;
+      document.getElementById('btn-login').disabled = false;
+      document.getElementById('login-spinner').style.display = 'none';
+      document.getElementById('btn-login-text').textContent = 'Try another account';
+      return;
+    }
+
+    // Authorized — show portal
+    const data = userDoc.data();
+    const role = data.role || 'user';
+
+    overlay.classList.add('hidden');
+    portal.classList.add('visible');
+    denied.style.display = 'none';
+
+    // Populate nav
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    const photo = document.getElementById('user-photo');
+    if (user.photoURL) {
+      photo.src = user.photoURL;
+    } else {
+      photo.style.display = 'none';
+      const initEl = document.getElementById('user-initials');
+      initEl.style.display = 'flex';
+      initEl.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+    }
+
+    const roleBadge = document.getElementById('role-badge');
+    roleBadge.textContent = role;
+    roleBadge.className = 'role-badge role-' + (role === 'admin' ? 'admin' : 'user');
+
+    document.getElementById('stat-role-display').textContent =
+      role.charAt(0).toUpperCase() + role.slice(1);
   });
-  if (palmMesh) {
-    palmMesh.material.color = new THREE.Color(config['palm-hex'] || '#f8f4ee');
-  }
-}
-
-function updateModel() { updateModelColors(); }
-
-// ─── Camera controls ──────────────────────────────────────
-function resetCamera() {
-  camera.position.set(0, 0.5, 3.5);
-  if (gloveGroup) { gloveGroup.rotation.set(0, 0, 0); }
-}
-
-function toggleAutoRotate() {
-  autoRotate = !autoRotate;
-  const btn = document.getElementById('rotate-btn');
-  btn.style.color = autoRotate ? 'var(--accent)' : '';
-}
-
-function zoomIn()  { camera.position.z = Math.max(1.5, camera.position.z - 0.4); }
-function zoomOut() { camera.position.z = Math.min(8, camera.position.z + 0.4); }
-
-// ─── Init ─────────────────────────────────────────────────
-initThree();
-updateSummary();
 </script>
 </body>
 </html>
