@@ -4,1241 +4,613 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Glove Custom Builder — Adira Semesta</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --white: #ffffff;
-  --off-white: #f7f8fa;
-  --border: rgba(0,0,0,0.08);
-  --border-strong: rgba(0,0,0,0.15);
-  --text-primary: #0a0a0a;
-  --text-secondary: #5a5a6e;
-  --text-muted: #9a9aaa;
-  --accent: #0047ff;
-  --accent-light: #e8eeff;
-  --panel-width: 340px;
-  --header-height: 60px;
-  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f1f5;--white:#fff;--off:#f7f8fa;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.15);
+  --t1:#0a0a0a;--t2:#5a5a6e;--t3:#9a9aaa;
+  --acc:#0047ff;--accl:#e8eeff;
+  --tr:.25s cubic-bezier(.4,0,.2,1);
 }
-
-html, body { height: 100%; overflow: hidden; }
-
-body {
-  font-family: 'Sora', sans-serif;
-  background: #f0f1f5;
-  color: var(--text-primary);
-  display: flex;
-  flex-direction: column;
-}
-
-/* ─── Header ─── */
-header {
-  height: var(--header-height);
-  background: white;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 16px;
-  flex-shrink: 0;
-  z-index: 10;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-family: 'Sora', sans-serif;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-.back-btn:hover { background: var(--off-white); }
-.back-btn svg { width: 14px; height: 14px; }
-
-.header-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.header-subtitle {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: 'Space Mono', monospace;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.header-center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.btn-outline {
-  padding: 7px 16px;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: transparent;
-  font-family: 'Sora', sans-serif;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.btn-outline:hover { background: var(--off-white); }
-
-.btn-primary {
-  padding: 7px 20px;
-  border: none;
-  border-radius: 10px;
-  background: var(--accent);
-  color: white;
-  font-family: 'Sora', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.btn-primary:hover { background: #0038d4; }
-
-/* ─── Main Layout ─── */
-.app-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-/* ─── Left Config Panel ─── */
-.config-panel {
-  width: var(--panel-width);
-  background: white;
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-/* Tab Nav */
-.tab-nav {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  padding: 0 16px;
-  gap: 0;
-  overflow-x: auto;
-  flex-shrink: 0;
-}
-
-.tab-nav::-webkit-scrollbar { display: none; }
-
-.tab-btn {
-  padding: 14px 12px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  font-family: 'Sora', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: var(--transition);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: -1px;
-}
-
-.tab-btn.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.tab-btn:hover:not(.active) { color: var(--text-secondary); }
-
-/* Config Scroll Area */
-.config-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 16px;
-}
-
-.config-scroll::-webkit-scrollbar { width: 4px; }
-.config-scroll::-webkit-scrollbar-track { background: transparent; }
-.config-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-
-/* Tab pane */
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
-
-/* Config Group */
-.config-group {
-  margin-bottom: 24px;
-}
-
-.group-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-family: 'Space Mono', monospace;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-/* Option chips */
-.option-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chip {
-  padding: 6px 12px;
-  background: var(--off-white);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-  user-select: none;
-}
-
-.chip:hover { border-color: rgba(0,71,255,0.3); color: var(--accent); }
-
-.chip.selected {
-  background: var(--accent-light);
-  border-color: rgba(0,71,255,0.3);
-  color: var(--accent);
-  font-weight: 500;
-}
-
-/* Color swatches */
-.color-swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.swatch {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: var(--transition);
-  overflow: hidden;
-}
-
-.swatch:hover { transform: scale(1.1); }
-.swatch.selected { border-color: var(--accent); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
-
-.swatch-label {
-  position: absolute;
-  bottom: -22px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 9px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  font-family: 'Space Mono', monospace;
-}
-
-.color-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.color-row-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-/* Material cards */
-.material-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.mat-card {
-  padding: 10px;
-  background: var(--off-white);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: var(--transition);
-  text-align: center;
-}
-
-.mat-card:hover { border-color: rgba(0,71,255,0.3); }
-.mat-card.selected { background: var(--accent-light); border-color: rgba(0,71,255,0.3); }
-
-.mat-name {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-top: 4px;
-}
-
-.mat-swatch {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  margin: 0 auto 4px;
-  border: 1px solid var(--border);
-}
-
-/* ─── 3D Viewport ─── */
-.viewport {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, #e8eaf0 0%, #f0f1f5 50%, #e4e6ed 100%);
-  overflow: hidden;
-}
-
-.viewport-bg-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0,71,255,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,71,255,0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
-
-#three-canvas {
-  display: block;
-  cursor: grab;
-  touch-action: none;
-}
-
-#three-canvas:active { cursor: grabbing; }
-
-/* Viewport Overlay UI */
-.viewport-label {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.viewport-hint {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255,255,255,0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.viewport-controls {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.vp-btn {
-  width: 36px; height: 36px;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.vp-btn:hover { background: white; color: var(--accent); }
-
-/* Model upload prompt */
-.model-upload-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  background: rgba(240,241,245,0.95);
-  backdrop-filter: blur(4px);
-  z-index: 5;
-}
-
-.model-upload-overlay.hidden { display: none; }
-
-.upload-box {
-  width: 320px;
-  padding: 40px 32px;
-  background: white;
-  border: 2px dashed rgba(0,71,255,0.2);
-  border-radius: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.upload-box:hover { border-color: rgba(0,71,255,0.5); }
-
-.upload-icon {
-  width: 52px; height: 52px;
-  margin: 0 auto 16px;
-  background: var(--accent-light);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.upload-icon svg { width: 24px; height: 24px; stroke: var(--accent); }
-
-.upload-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.upload-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-.upload-formats { font-size: 11px; color: var(--text-muted); margin-top: 12px; font-family: 'Space Mono', monospace; }
-
-#model-file-input { display: none; }
-
-/* ─── Right Summary Panel ─── */
-.summary-panel {
-  width: 280px;
-  background: white;
-  border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.summary-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.summary-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.summary-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-}
-
-.summary-scroll::-webkit-scrollbar { width: 3px; }
-.summary-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-
-/* Summary selection list */
-.summary-section {
-  margin-bottom: 20px;
-}
-
-.summary-section-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-family: 'Space Mono', monospace;
-  margin-bottom: 8px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.summary-row:last-child { border-bottom: none; }
-
-.summary-key {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.summary-val {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-primary);
-  text-align: right;
-  max-width: 120px;
-  font-family: 'Space Mono', monospace;
-}
-
-.summary-val.empty { color: var(--text-muted); font-style: italic; font-family: 'Sora', sans-serif; }
-
-/* Costing Section */
-.costing-box {
-  margin: 0 16px 16px;
-  background: var(--off-white);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.costing-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-family: 'Space Mono', monospace;
-  margin-bottom: 12px;
-}
-
-.costing-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-}
-
-.costing-row.total {
-  border-top: 1px solid var(--border-strong);
-  margin-top: 8px;
-  padding-top: 10px;
-}
-
-.costing-label { font-size: 12px; color: var(--text-secondary); }
-.costing-value { font-size: 12px; font-family: 'Space Mono', monospace; color: var(--text-primary); }
-.costing-row.total .costing-label { font-weight: 600; color: var(--text-primary); font-size: 13px; }
-.costing-row.total .costing-value { font-weight: 700; color: var(--accent); font-size: 15px; }
-
-.smv-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.smv-card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-}
-
-.smv-value {
-  font-family: 'Space Mono', monospace;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.smv-label {
-  font-size: 9px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-top: 2px;
-}
-
-.note-pending {
-  font-size: 10px;
-  color: var(--text-muted);
-  text-align: center;
-  font-style: italic;
-  padding: 8px 0;
-}
-
-/* ─── Responsive ─── */
-@media (max-width: 1100px) {
-  .summary-panel { display: none; }
-}
-
-@media (max-width: 700px) {
-  .config-panel { width: 280px; }
-}
+html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:var(--bg);color:var(--t1)}
+body{display:flex;flex-direction:column}
+
+/* HEADER */
+header{height:60px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;z-index:10}
+.back-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--border);border-radius:100px;font-family:'Sora',sans-serif;font-size:12px;color:var(--t2);cursor:pointer;text-decoration:none;transition:var(--tr)}
+.back-btn:hover{background:var(--off)}
+.hdr-center{flex:1;text-align:center}
+.hdr-title{font-size:14px;font-weight:600}
+.hdr-sub{font-size:10px;color:var(--t3);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+.hdr-actions{display:flex;gap:8px}
+.btn-out{padding:7px 14px;border:1px solid var(--border2);border-radius:10px;background:transparent;font-family:'Sora',sans-serif;font-size:12px;color:var(--t2);cursor:pointer;transition:var(--tr)}
+.btn-out:hover{background:var(--off)}
+.btn-pri{padding:7px 18px;border:none;border-radius:10px;background:var(--acc);color:#fff;font-family:'Sora',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:var(--tr)}
+.btn-pri:hover{background:#0038d4}
+
+/* LAYOUT */
+.app-body{flex:1;display:flex;overflow:hidden}
+
+/* LEFT PANEL */
+.config-panel{width:300px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.tab-nav{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{padding:12px 10px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:'Sora',sans-serif;font-size:10px;font-weight:500;color:var(--t3);cursor:pointer;white-space:nowrap;transition:var(--tr);text-transform:uppercase;letter-spacing:.04em;margin-bottom:-1px}
+.tab-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tab-btn:hover:not(.active){color:var(--t2)}
+.config-scroll{flex:1;overflow-y:auto;padding:16px}
+.config-scroll::-webkit-scrollbar{width:3px}
+.config-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* GROUPS */
+.cg{margin-bottom:20px}
+.cg-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;font-family:'Space Mono',monospace;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 11px;background:var(--off);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--t2);cursor:pointer;transition:var(--tr);user-select:none}
+.chip:hover{border-color:rgba(0,71,255,.3);color:var(--acc)}
+.chip.sel{background:var(--accl);border-color:rgba(0,71,255,.3);color:var(--acc);font-weight:500}
+
+/* SWATCHES */
+.swatches{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.sw{width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:var(--tr)}
+.sw:hover{transform:scale(1.1)}
+.sw.sel{border-color:var(--acc);box-shadow:0 0 0 2px #fff,0 0 0 4px var(--acc)}
+.sw-name{font-size:10px;color:var(--t3);font-family:'Space Mono',monospace;margin-top:4px}
+
+/* MATERIAL GRID */
+.mat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mat-card{padding:10px 8px;background:var(--off);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:var(--tr);text-align:center}
+.mat-card:hover{border-color:rgba(0,71,255,.3)}
+.mat-card.sel{background:var(--accl);border-color:rgba(0,71,255,.3)}
+.mat-sw{width:30px;height:30px;border-radius:7px;margin:0 auto 4px;border:1px solid var(--border)}
+.mat-name{font-size:11px;font-weight:500;color:var(--t1)}
+
+/* VIEWPORT */
+.viewport{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#e8eaf0,#f0f1f5,#e4e6ed);overflow:hidden}
+.vp-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,71,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,71,255,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+#three-canvas{display:block;cursor:grab;touch-action:none}
+#three-canvas:active{cursor:grabbing}
+.vp-label{position:absolute;top:16px;left:16px;font-family:'Space Mono',monospace;font-size:10px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase}
+.vp-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);padding:7px 16px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:100px;font-size:11px;color:var(--t2);white-space:nowrap}
+.vp-controls{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:6px}
+.vp-btn{width:34px;height:34px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--tr);font-size:16px;color:var(--t2);font-family:monospace}
+.vp-btn:hover{background:var(--white);color:var(--acc)}
+
+/* UPLOAD OVERLAY */
+.upload-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(240,241,245,.95);z-index:5}
+.upload-overlay.hidden{display:none}
+.upload-box{width:300px;padding:36px 28px;background:var(--white);border:2px dashed rgba(0,71,255,.2);border-radius:20px;text-align:center;cursor:pointer;transition:var(--tr)}
+.upload-box:hover{border-color:rgba(0,71,255,.5)}
+.upload-icon{width:48px;height:48px;margin:0 auto 14px;background:var(--accl);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.upload-title{font-size:15px;font-weight:600;margin-bottom:6px}
+.upload-desc{font-size:12px;color:var(--t2);line-height:1.5}
+.upload-fmt{font-size:10px;color:var(--t3);margin-top:10px;font-family:'Space Mono',monospace;letter-spacing:.06em}
+.demo-link{font-size:12px;color:var(--t2)}
+.demo-link a{color:var(--acc);cursor:pointer;text-decoration:underline}
+
+/* RIGHT SUMMARY */
+.summary-panel{width:260px;background:var(--white);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sum-header{padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600}
+.sum-scroll{flex:1;overflow-y:auto;padding:14px}
+.sum-scroll::-webkit-scrollbar{width:3px}
+.sum-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.sum-sec{margin-bottom:18px}
+.sum-sec-title{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;font-family:'Space Mono',monospace;margin-bottom:6px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)}
+.sum-row:last-child{border-bottom:none}
+.sum-key{font-size:11px;color:var(--t2)}
+.sum-val{font-size:11px;font-weight:500;color:var(--t1);font-family:'Space Mono',monospace;text-align:right;max-width:120px}
+
+/* COSTING */
+.cost-box{margin:0 14px 14px;background:var(--off);border:1px solid var(--border);border-radius:14px;padding:14px}
+.cost-title{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;font-family:'Space Mono',monospace;margin-bottom:10px}
+.cost-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px}
+.cost-row.total{border-top:1px solid var(--border2);margin-top:6px;padding-top:8px;font-weight:700}
+.cost-row.total .cost-val{color:var(--acc);font-size:14px}
+.smv-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.smv-card{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:9px;text-align:center}
+.smv-val{font-family:'Space Mono',monospace;font-size:15px;font-weight:700}
+.smv-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.cost-note{font-size:10px;color:var(--t3);text-align:center;font-style:italic;margin-bottom:8px}
+
+/* LOGO UPLOAD */
+.logo-upload-label{display:block;padding:14px;background:var(--off);border:1px dashed rgba(0,71,255,.2);border-radius:10px;text-align:center;cursor:pointer;font-size:12px;color:var(--t2);transition:var(--tr)}
+.logo-upload-label:hover{border-color:rgba(0,71,255,.4)}
+#logo-preview{margin-top:8px;display:none;text-align:center}
+#logo-preview img{max-height:56px;max-width:100%;border-radius:7px}
+#logo-preview p{font-size:10px;color:var(--t3);margin-top:4px}
+
+@media(max-width:1100px){.summary-panel{display:none}}
+@media(max-width:700px){.config-panel{width:260px}}
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <header>
-  <a href="../index.html" class="back-btn">
-    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-      <path d="M9 11L5 7l4-4"/>
-    </svg>
-    Portal
-  </a>
-  <div class="header-center">
-    <div class="header-title">Glove Custom Builder</div>
-    <div class="header-subtitle">Adira Semesta Industry</div>
+  <a href="../index.html" class="back-btn">← Portal</a>
+  <div class="hdr-center">
+    <div class="hdr-title">Glove Custom Builder</div>
+    <div class="hdr-sub">Adira Semesta Industry</div>
   </div>
-  <div class="header-actions">
-    <button class="btn-outline" onclick="resetConfig()">Reset</button>
-    <button class="btn-outline" onclick="saveDesign()">Save Draft</button>
-    <button class="btn-primary" onclick="exportSummary()">Export PDF</button>
+  <div class="hdr-actions">
+    <button class="btn-out" onclick="resetAll()">Reset</button>
+    <button class="btn-out" onclick="saveDraft()">Save Draft</button>
+    <button class="btn-pri" onclick="exportPDF()">Export PDF</button>
   </div>
 </header>
 
-<!-- Main Body -->
 <div class="app-body">
 
-  <!-- ─── Config Panel ─── -->
+  <!-- LEFT PANEL -->
   <div class="config-panel">
-    <div class="tab-nav" id="tab-nav">
-      <button class="tab-btn active" onclick="switchTab('structure')">Structure</button>
-      <button class="tab-btn" onclick="switchTab('sew')">Sew Method</button>
-      <button class="tab-btn" onclick="switchTab('material')">Material</button>
-      <button class="tab-btn" onclick="switchTab('color')">Color</button>
-      <button class="tab-btn" onclick="switchTab('print')">Print & Logo</button>
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="structure">Structure</button>
+      <button class="tab-btn" data-tab="sew">Sew Method</button>
+      <button class="tab-btn" data-tab="material">Material</button>
+      <button class="tab-btn" data-tab="color">Color</button>
+      <button class="tab-btn" data-tab="print">Print & Logo</button>
     </div>
-
     <div class="config-scroll">
 
-      <!-- ─── STRUCTURE TAB ─── -->
+      <!-- STRUCTURE -->
       <div class="tab-pane active" id="tab-structure">
-
-        <div class="config-group">
-          <div class="group-label">Body</div>
-          <div class="option-chips" id="chips-body">
-            <div class="chip selected" onclick="selectChip(this,'body')">Full</div>
-            <div class="chip" onclick="selectChip(this,'body')">Combination</div>
+        <div class="cg"><div class="cg-label">Body</div>
+          <div class="chips">
+            <div class="chip sel" data-key="body" data-val="Full">Full</div>
+            <div class="chip" data-key="body" data-val="Combination">Combination</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Thumb</div>
-          <div class="option-chips" id="chips-thumb">
-            <div class="chip selected" onclick="selectChip(this,'thumb')">Full</div>
-            <div class="chip" onclick="selectChip(this,'thumb')">Combination</div>
+        <div class="cg"><div class="cg-label">Thumb</div>
+          <div class="chips">
+            <div class="chip sel" data-key="thumb" data-val="Full">Full</div>
+            <div class="chip" data-key="thumb" data-val="Combination">Combination</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Knuckle</div>
-          <div class="option-chips" id="chips-knuckle">
-            <div class="chip" onclick="selectChip(this,'knuckle')">1</div>
-            <div class="chip" onclick="selectChip(this,'knuckle')">2</div>
-            <div class="chip selected" onclick="selectChip(this,'knuckle')">3</div>
-            <div class="chip" onclick="selectChip(this,'knuckle')">4</div>
-            <div class="chip" onclick="selectChip(this,'knuckle')">5</div>
+        <div class="cg"><div class="cg-label">Knuckle</div>
+          <div class="chips">
+            <div class="chip" data-key="knuckle" data-val="1">1</div>
+            <div class="chip" data-key="knuckle" data-val="2">2</div>
+            <div class="chip sel" data-key="knuckle" data-val="3">3</div>
+            <div class="chip" data-key="knuckle" data-val="4">4</div>
+            <div class="chip" data-key="knuckle" data-val="5">5</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Gusset</div>
-          <div class="option-chips" id="chips-gusset">
-            <div class="chip selected" onclick="selectChip(this,'gusset')">Combination</div>
-            <div class="chip" onclick="selectChip(this,'gusset')">Combination Reinforce</div>
-            <div class="chip" onclick="selectChip(this,'gusset')">Full Stitchless</div>
-            <div class="chip" onclick="selectChip(this,'gusset')">Hole Stitchless</div>
+        <div class="cg"><div class="cg-label">Gusset</div>
+          <div class="chips">
+            <div class="chip sel" data-key="gusset" data-val="Combination">Combination</div>
+            <div class="chip" data-key="gusset" data-val="Combination Reinforce">Combination Reinforce</div>
+            <div class="chip" data-key="gusset" data-val="Full Stitchless">Full Stitchless</div>
+            <div class="chip" data-key="gusset" data-val="Hole Stitchless">Hole Stitchless</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Tab Pattern</div>
-          <div class="option-chips" id="chips-tab">
-            <div class="chip" onclick="selectChip(this,'tab')">1</div>
-            <div class="chip selected" onclick="selectChip(this,'tab')">2</div>
-            <div class="chip" onclick="selectChip(this,'tab')">3</div>
-            <div class="chip" onclick="selectChip(this,'tab')">4</div>
-            <div class="chip" onclick="selectChip(this,'tab')">5</div>
+        <div class="cg"><div class="cg-label">Tab Pattern</div>
+          <div class="chips">
+            <div class="chip" data-key="tab" data-val="1">1</div>
+            <div class="chip sel" data-key="tab" data-val="2">2</div>
+            <div class="chip" data-key="tab" data-val="3">3</div>
+            <div class="chip" data-key="tab" data-val="4">4</div>
+            <div class="chip" data-key="tab" data-val="5">5</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Puller Pattern</div>
-          <div class="option-chips" id="chips-puller">
-            <div class="chip" onclick="selectChip(this,'puller')">1</div>
-            <div class="chip selected" onclick="selectChip(this,'puller')">2</div>
-            <div class="chip" onclick="selectChip(this,'puller')">3</div>
-            <div class="chip" onclick="selectChip(this,'puller')">4</div>
-            <div class="chip" onclick="selectChip(this,'puller')">5</div>
+        <div class="cg"><div class="cg-label">Puller Pattern</div>
+          <div class="chips">
+            <div class="chip" data-key="puller" data-val="1">1</div>
+            <div class="chip sel" data-key="puller" data-val="2">2</div>
+            <div class="chip" data-key="puller" data-val="3">3</div>
+            <div class="chip" data-key="puller" data-val="4">4</div>
+            <div class="chip" data-key="puller" data-val="5">5</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Palm Patch</div>
-          <div class="option-chips" id="chips-palm-patch">
-            <div class="chip" onclick="selectChip(this,'palm-patch')">1</div>
-            <div class="chip selected" onclick="selectChip(this,'palm-patch')">2</div>
-            <div class="chip" onclick="selectChip(this,'palm-patch')">3</div>
-            <div class="chip" onclick="selectChip(this,'palm-patch')">4</div>
-            <div class="chip" onclick="selectChip(this,'palm-patch')">5</div>
+        <div class="cg"><div class="cg-label">Palm Patch</div>
+          <div class="chips">
+            <div class="chip" data-key="palmPatch" data-val="1">1</div>
+            <div class="chip sel" data-key="palmPatch" data-val="2">2</div>
+            <div class="chip" data-key="palmPatch" data-val="3">3</div>
+            <div class="chip" data-key="palmPatch" data-val="4">4</div>
+            <div class="chip" data-key="palmPatch" data-val="5">5</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Palm Padding</div>
-          <div class="option-chips" id="chips-palm-padding">
-            <div class="chip" onclick="selectChip(this,'palm-padding')">1</div>
-            <div class="chip" onclick="selectChip(this,'palm-padding')">2</div>
-            <div class="chip selected" onclick="selectChip(this,'palm-padding')">3</div>
-            <div class="chip" onclick="selectChip(this,'palm-padding')">4</div>
-            <div class="chip" onclick="selectChip(this,'palm-padding')">5</div>
+        <div class="cg"><div class="cg-label">Palm Padding</div>
+          <div class="chips">
+            <div class="chip" data-key="palmPadding" data-val="1">1</div>
+            <div class="chip" data-key="palmPadding" data-val="2">2</div>
+            <div class="chip sel" data-key="palmPadding" data-val="3">3</div>
+            <div class="chip" data-key="palmPadding" data-val="4">4</div>
+            <div class="chip" data-key="palmPadding" data-val="5">5</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Piping</div>
-          <div class="option-chips" id="chips-piping">
-            <div class="chip selected" onclick="selectChip(this,'piping')">Normal</div>
-            <div class="chip" onclick="selectChip(this,'piping')">Inside Out</div>
+        <div class="cg"><div class="cg-label">Piping</div>
+          <div class="chips">
+            <div class="chip sel" data-key="piping" data-val="Normal">Normal</div>
+            <div class="chip" data-key="piping" data-val="Inside Out">Inside Out</div>
           </div>
         </div>
+      </div>
 
-      </div><!-- /tab-structure -->
-
-      <!-- ─── SEW METHOD TAB ─── -->
+      <!-- SEW METHOD -->
       <div class="tab-pane" id="tab-sew">
-
-        <div class="config-group">
-          <div class="group-label">Tab Method</div>
-          <div class="option-chips" id="chips-tab-method">
-            <div class="chip selected" onclick="selectChip(this,'tab-method')">Full</div>
-            <div class="chip" onclick="selectChip(this,'tab-method')">Inlay</div>
-            <div class="chip" onclick="selectChip(this,'tab-method')">Direct</div>
+        <div class="cg"><div class="cg-label">Tab Method</div>
+          <div class="chips">
+            <div class="chip sel" data-key="tabMethod" data-val="Full">Full</div>
+            <div class="chip" data-key="tabMethod" data-val="Inlay">Inlay</div>
+            <div class="chip" data-key="tabMethod" data-val="Direct">Direct</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Tab Sew</div>
-          <div class="option-chips" id="chips-tab-sew">
-            <div class="chip selected" onclick="selectChip(this,'tab-sew')">2 Needle</div>
-            <div class="chip" onclick="selectChip(this,'tab-sew')">Piping</div>
+        <div class="cg"><div class="cg-label">Tab Sew</div>
+          <div class="chips">
+            <div class="chip sel" data-key="tabSew" data-val="2 Needle">2 Needle</div>
+            <div class="chip" data-key="tabSew" data-val="Piping">Piping</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Puller Method</div>
-          <div class="option-chips" id="chips-puller-method">
-            <div class="chip selected" onclick="selectChip(this,'puller-method')">TPR</div>
-            <div class="chip" onclick="selectChip(this,'puller-method')">Deboss</div>
-            <div class="chip" onclick="selectChip(this,'puller-method')">2D Print</div>
-            <div class="chip" onclick="selectChip(this,'puller-method')">DTF</div>
+        <div class="cg"><div class="cg-label">Puller Method</div>
+          <div class="chips">
+            <div class="chip sel" data-key="pullerMethod" data-val="TPR">TPR</div>
+            <div class="chip" data-key="pullerMethod" data-val="Deboss">Deboss</div>
+            <div class="chip" data-key="pullerMethod" data-val="2D Print">2D Print</div>
+            <div class="chip" data-key="pullerMethod" data-val="DTF">DTF</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Gusset Sew</div>
-          <div class="option-chips" id="chips-gusset-sew">
-            <div class="chip selected" onclick="selectChip(this,'gusset-sew')">Inside</div>
-            <div class="chip" onclick="selectChip(this,'gusset-sew')">Back Outside</div>
-            <div class="chip" onclick="selectChip(this,'gusset-sew')">Palm Outside</div>
+        <div class="cg"><div class="cg-label">Gusset Sew</div>
+          <div class="chips">
+            <div class="chip sel" data-key="gussetSew" data-val="Inside">Inside</div>
+            <div class="chip" data-key="gussetSew" data-val="Back Outside">Back Outside</div>
+            <div class="chip" data-key="gussetSew" data-val="Palm Outside">Palm Outside</div>
           </div>
         </div>
+      </div>
 
-      </div><!-- /tab-sew -->
-
-      <!-- ─── MATERIAL TAB ─── -->
+      <!-- MATERIAL -->
       <div class="tab-pane" id="tab-material">
-
-        <div class="config-group">
-          <div class="group-label">Body Material</div>
-          <div class="material-grid" id="mat-body">
-            <div class="mat-card selected" onclick="selectMat(this,'mat-body')" data-mat="genuine-leather">
-              <div class="mat-swatch" style="background: #8B6F47;"></div>
-              <div class="mat-name">Genuine Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="synthetic-leather">
-              <div class="mat-swatch" style="background: #c4a882;"></div>
-              <div class="mat-name">Synthetic Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="synthetic">
-              <div class="mat-swatch" style="background: #b0b8c8;"></div>
-              <div class="mat-name">Synthetic</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="suede">
-              <div class="mat-swatch" style="background: #9e8070;"></div>
-              <div class="mat-name">Suede</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="lycra">
-              <div class="mat-swatch" style="background: #7090c0;"></div>
-              <div class="mat-name">Lycra</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="mesh">
-              <div class="mat-swatch" style="background: repeating-linear-gradient(45deg,#ddd 0,#ddd 2px,#f5f5f5 0,#f5f5f5 8px);"></div>
-              <div class="mat-name">Mesh</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-body')" data-mat="stretch-fabric">
-              <div class="mat-swatch" style="background: #8090a8;"></div>
-              <div class="mat-name">Stretch Fabric</div>
-            </div>
+        <div class="cg"><div class="cg-label">Body Material</div>
+          <div class="mat-grid" id="matBody">
+            <div class="mat-card sel" data-key="matBody" data-val="Genuine Leather"><div class="mat-sw" style="background:#8B6F47"></div><div class="mat-name">Genuine Leather</div></div>
+            <div class="mat-card" data-key="matBody" data-val="Synthetic Leather"><div class="mat-sw" style="background:#c4a882"></div><div class="mat-name">Synthetic Leather</div></div>
+            <div class="mat-card" data-key="matBody" data-val="Synthetic"><div class="mat-sw" style="background:#b0b8c8"></div><div class="mat-name">Synthetic</div></div>
+            <div class="mat-card" data-key="matBody" data-val="Suede"><div class="mat-sw" style="background:#9e8070"></div><div class="mat-name">Suede</div></div>
+            <div class="mat-card" data-key="matBody" data-val="Lycra"><div class="mat-sw" style="background:#7090c0"></div><div class="mat-name">Lycra</div></div>
+            <div class="mat-card" data-key="matBody" data-val="Mesh"><div class="mat-sw" style="background:repeating-linear-gradient(45deg,#ddd 0,#ddd 2px,#f5f5f5 0,#f5f5f5 8px)"></div><div class="mat-name">Mesh</div></div>
+            <div class="mat-card" data-key="matBody" data-val="Stretch Fabric"><div class="mat-sw" style="background:#8090a8"></div><div class="mat-name">Stretch Fabric</div></div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Palm Material</div>
-          <div class="material-grid" id="mat-palm">
-            <div class="mat-card selected" onclick="selectMat(this,'mat-palm')" data-mat="genuine-leather">
-              <div class="mat-swatch" style="background: #8B6F47;"></div>
-              <div class="mat-name">Genuine Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-palm')" data-mat="synthetic-leather">
-              <div class="mat-swatch" style="background: #c4a882;"></div>
-              <div class="mat-name">Synthetic Leather</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-palm')" data-mat="suede">
-              <div class="mat-swatch" style="background: #9e8070;"></div>
-              <div class="mat-name">Suede</div>
-            </div>
-            <div class="mat-card" onclick="selectMat(this,'mat-palm')" data-mat="synthetic">
-              <div class="mat-swatch" style="background: #b0b8c8;"></div>
-              <div class="mat-name">Synthetic</div>
-            </div>
+        <div class="cg"><div class="cg-label">Palm Material</div>
+          <div class="mat-grid" id="matPalm">
+            <div class="mat-card sel" data-key="matPalm" data-val="Genuine Leather"><div class="mat-sw" style="background:#8B6F47"></div><div class="mat-name">Genuine Leather</div></div>
+            <div class="mat-card" data-key="matPalm" data-val="Synthetic Leather"><div class="mat-sw" style="background:#c4a882"></div><div class="mat-name">Synthetic Leather</div></div>
+            <div class="mat-card" data-key="matPalm" data-val="Suede"><div class="mat-sw" style="background:#9e8070"></div><div class="mat-name">Suede</div></div>
+            <div class="mat-card" data-key="matPalm" data-val="Synthetic"><div class="mat-sw" style="background:#b0b8c8"></div><div class="mat-name">Synthetic</div></div>
           </div>
         </div>
+      </div>
 
-      </div><!-- /tab-material -->
-
-      <!-- ─── COLOR TAB ─── -->
+      <!-- COLOR -->
       <div class="tab-pane" id="tab-color">
-
-        <div class="config-group">
-          <div class="group-label">Body Color</div>
-          <div class="color-swatches" id="sw-body-color">
-            <div class="swatch selected" style="background:#f8f4ee;" onclick="selectSwatch(this,'sw-body-color','body')" title="Pearl White"></div>
-            <div class="swatch" style="background:#f5f2ec;" onclick="selectSwatch(this,'sw-body-color','body')" title="Off White"></div>
-            <div class="swatch" style="background:#f9f9f9;" onclick="selectSwatch(this,'sw-body-color','body')" title="Snow White"></div>
-            <div class="swatch" style="background:#8a8a8a;" onclick="selectSwatch(this,'sw-body-color','body')" title="Gray"></div>
-            <div class="swatch" style="background:#1a1a1a;" onclick="selectSwatch(this,'sw-body-color','body')" title="Black"></div>
+        <div class="cg"><div class="cg-label">Body Color</div>
+          <div class="swatches" id="swBody">
+            <div class="sw sel" data-key="bodyColor" data-val="Pearl White" data-hex="#f8f4ee" style="background:#f8f4ee;border:1px solid #ddd" title="Pearl White"></div>
+            <div class="sw" data-key="bodyColor" data-val="Off White" data-hex="#f5f2ec" style="background:#f5f2ec;border:1px solid #ddd" title="Off White"></div>
+            <div class="sw" data-key="bodyColor" data-val="Snow White" data-hex="#f9f9f9" style="background:#f9f9f9;border:1px solid #ddd" title="Snow White"></div>
+            <div class="sw" data-key="bodyColor" data-val="Gray" data-hex="#8a8a8a" style="background:#8a8a8a" title="Gray"></div>
+            <div class="sw" data-key="bodyColor" data-val="Black" data-hex="#1a1a1a" style="background:#1a1a1a" title="Black"></div>
           </div>
-          <div style="margin-top:8px;">
-            <span id="body-color-name" style="font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace;">Pearl White</span>
-          </div>
+          <div class="sw-name" id="bodyColorName">Pearl White</div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Palm Color</div>
-          <div class="color-swatches" id="sw-palm-color">
-            <div class="swatch selected" style="background:#f8f4ee;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Pearl White"></div>
-            <div class="swatch" style="background:#f5f2ec;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Off White"></div>
-            <div class="swatch" style="background:#f9f9f9;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Snow White"></div>
-            <div class="swatch" style="background:#8a8a8a;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Gray"></div>
-            <div class="swatch" style="background:#1a1a1a;" onclick="selectSwatch(this,'sw-palm-color','palm')" title="Black"></div>
+        <div class="cg"><div class="cg-label">Palm Color</div>
+          <div class="swatches" id="swPalm">
+            <div class="sw sel" data-key="palmColor" data-val="Pearl White" data-hex="#f8f4ee" style="background:#f8f4ee;border:1px solid #ddd" title="Pearl White"></div>
+            <div class="sw" data-key="palmColor" data-val="Off White" data-hex="#f5f2ec" style="background:#f5f2ec;border:1px solid #ddd" title="Off White"></div>
+            <div class="sw" data-key="palmColor" data-val="Snow White" data-hex="#f9f9f9" style="background:#f9f9f9;border:1px solid #ddd" title="Snow White"></div>
+            <div class="sw" data-key="palmColor" data-val="Gray" data-hex="#8a8a8a" style="background:#8a8a8a" title="Gray"></div>
+            <div class="sw" data-key="palmColor" data-val="Black" data-hex="#1a1a1a" style="background:#1a1a1a" title="Black"></div>
           </div>
-          <div style="margin-top:8px;">
-            <span id="palm-color-name" style="font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace;">Pearl White</span>
-          </div>
+          <div class="sw-name" id="palmColorName">Pearl White</div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Piping Color</div>
-          <div class="color-swatches" id="sw-piping-color">
-            <div class="swatch" style="background:#f8f4ee;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Pearl White"></div>
-            <div class="swatch" style="background:#f5f2ec;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Off White"></div>
-            <div class="swatch" style="background:#f9f9f9;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Snow White"></div>
-            <div class="swatch selected" style="background:#8a8a8a;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Gray"></div>
-            <div class="swatch" style="background:#1a1a1a;" onclick="selectSwatch(this,'sw-piping-color','piping-color')" title="Black"></div>
+        <div class="cg"><div class="cg-label">Piping Color</div>
+          <div class="swatches" id="swPiping">
+            <div class="sw" data-key="pipingColor" data-val="Pearl White" data-hex="#f8f4ee" style="background:#f8f4ee;border:1px solid #ddd" title="Pearl White"></div>
+            <div class="sw" data-key="pipingColor" data-val="Off White" data-hex="#f5f2ec" style="background:#f5f2ec;border:1px solid #ddd" title="Off White"></div>
+            <div class="sw" data-key="pipingColor" data-val="Snow White" data-hex="#f9f9f9" style="background:#f9f9f9;border:1px solid #ddd" title="Snow White"></div>
+            <div class="sw sel" data-key="pipingColor" data-val="Gray" data-hex="#8a8a8a" style="background:#8a8a8a" title="Gray"></div>
+            <div class="sw" data-key="pipingColor" data-val="Black" data-hex="#1a1a1a" style="background:#1a1a1a" title="Black"></div>
           </div>
-          <div style="margin-top:8px;">
-            <span id="piping-color-name" style="font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace;">Gray</span>
-          </div>
+          <div class="sw-name" id="pipingColorName">Gray</div>
         </div>
+      </div>
 
-      </div><!-- /tab-color -->
-
-      <!-- ─── PRINT & LOGO TAB ─── -->
+      <!-- PRINT & LOGO -->
       <div class="tab-pane" id="tab-print">
-
-        <div class="config-group">
-          <div class="group-label">Printing – Body</div>
-          <div class="option-chips" id="chips-print-body">
-            <div class="chip selected" onclick="selectChip(this,'print-body')">3D Print</div>
-            <div class="chip" onclick="selectChip(this,'print-body')">2D Print</div>
-            <div class="chip" onclick="selectChip(this,'print-body')">Digital Print</div>
-            <div class="chip" onclick="selectChip(this,'print-body')">DTF</div>
+        <div class="cg"><div class="cg-label">Printing – Body</div>
+          <div class="chips">
+            <div class="chip sel" data-key="printBody" data-val="3D Print">3D Print</div>
+            <div class="chip" data-key="printBody" data-val="2D Print">2D Print</div>
+            <div class="chip" data-key="printBody" data-val="Digital Print">Digital Print</div>
+            <div class="chip" data-key="printBody" data-val="DTF">DTF</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Logo – Tab Style</div>
-          <div class="option-chips" id="chips-logo-tab">
-            <div class="chip selected" onclick="selectChip(this,'logo-tab')">Full</div>
-            <div class="chip" onclick="selectChip(this,'logo-tab')">Combination</div>
+        <div class="cg"><div class="cg-label">Logo – Tab Style</div>
+          <div class="chips">
+            <div class="chip sel" data-key="logoTab" data-val="Full">Full</div>
+            <div class="chip" data-key="logoTab" data-val="Combination">Combination</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Logo – Method</div>
-          <div class="option-chips" id="chips-logo-method">
-            <div class="chip" onclick="selectChip(this,'logo-method')">3D Print</div>
-            <div class="chip selected" onclick="selectChip(this,'logo-method')">2D Print</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">Digital Print</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">DTF</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">Embroidery</div>
-            <div class="chip" onclick="selectChip(this,'logo-method')">Woven</div>
+        <div class="cg"><div class="cg-label">Logo – Method</div>
+          <div class="chips">
+            <div class="chip" data-key="logoMethod" data-val="3D Print">3D Print</div>
+            <div class="chip sel" data-key="logoMethod" data-val="2D Print">2D Print</div>
+            <div class="chip" data-key="logoMethod" data-val="Digital Print">Digital Print</div>
+            <div class="chip" data-key="logoMethod" data-val="DTF">DTF</div>
+            <div class="chip" data-key="logoMethod" data-val="Embroidery">Embroidery</div>
+            <div class="chip" data-key="logoMethod" data-val="Woven">Woven</div>
           </div>
         </div>
-
-        <div class="config-group">
-          <div class="group-label">Upload Logo File</div>
-          <label style="display:block; padding:16px; background:var(--off-white); border:1px dashed rgba(0,71,255,0.2); border-radius:12px; text-align:center; cursor:pointer; font-size:12px; color:var(--text-secondary);" for="logo-upload">
-            Click to upload logo (PNG/SVG)
-          </label>
-          <input type="file" id="logo-upload" accept=".png,.svg,.jpg" style="display:none;" onchange="handleLogoUpload(event)">
-          <div id="logo-preview" style="margin-top:10px; display:none; text-align:center;">
-            <img id="logo-img" src="" style="max-height:60px; max-width:100%; border-radius:8px;">
-            <p style="font-size:11px; color:var(--text-muted); margin-top:6px;" id="logo-filename"></p>
-          </div>
+        <div class="cg"><div class="cg-label">Upload Logo</div>
+          <label class="logo-upload-label" for="logoFile">Click to upload logo (PNG / SVG)</label>
+          <input type="file" id="logoFile" accept=".png,.svg,.jpg" style="display:none">
+          <div id="logo-preview"><img id="logo-img" src=""><p id="logo-fname"></p></div>
         </div>
-
-      </div><!-- /tab-print -->
+      </div>
 
     </div><!-- /config-scroll -->
   </div><!-- /config-panel -->
 
-  <!-- ─── 3D Viewport ─── -->
+  <!-- VIEWPORT -->
   <div class="viewport" id="viewport">
-    <div class="viewport-bg-grid"></div>
+    <div class="vp-grid"></div>
 
-    <!-- Model upload overlay -->
-    <div class="model-upload-overlay" id="upload-overlay">
-      <div class="upload-box" onclick="document.getElementById('model-file-input').click()">
-        <div class="upload-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-        </div>
+    <div class="upload-overlay" id="uploadOverlay">
+      <div class="upload-box" id="uploadBox">
+        <div class="upload-icon">📁</div>
         <div class="upload-title">Load 3D Glove Model</div>
-        <div class="upload-desc">Upload your OBJ, GLB, or FBX file to display the glove in 3D. The model will respond to all configuration changes.</div>
-        <div class="upload-formats">OBJ · GLB · GLTF · FBX</div>
+        <div class="upload-desc">Upload OBJ, GLB, or GLTF file to display the glove in 3D</div>
+        <div class="upload-fmt">OBJ · GLB · GLTF</div>
       </div>
-      <p style="font-size:12px; color:var(--text-muted);">or <span style="color:var(--accent); cursor:pointer; text-decoration:underline;" onclick="loadDemoModel()">use a demo placeholder</span> while your model is ready</p>
+      <div class="demo-link">or <a id="demoLink">use a demo placeholder</a> while your model is ready</div>
     </div>
 
-    <input type="file" id="model-file-input" accept=".obj,.glb,.gltf,.fbx" onchange="loadModel(event)">
-
-    <!-- Canvas -->
+    <input type="file" id="modelFile" accept=".obj,.glb,.gltf" style="display:none">
     <canvas id="three-canvas"></canvas>
 
-    <!-- Viewport UI -->
-    <div class="viewport-label">3D Viewer · Drag to Rotate</div>
-
-    <div class="viewport-controls">
-      <button class="vp-btn" onclick="resetCamera()" title="Reset camera">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <path d="M2 8a6 6 0 1 0 1.5-4"/>
-          <path d="M2 3v4h4"/>
-        </svg>
-      </button>
-      <button class="vp-btn" onclick="toggleAutoRotate()" title="Auto rotate" id="rotate-btn">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <path d="M8 2a6 6 0 1 1-4.24 1.76"/>
-          <path d="M2 5l1.76-3L5 5"/>
-        </svg>
-      </button>
-      <button class="vp-btn" onclick="zoomIn()" title="Zoom in">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <circle cx="7" cy="7" r="4"/><path d="M11 11l2.5 2.5M7 5v4M5 7h4"/>
-        </svg>
-      </button>
-      <button class="vp-btn" onclick="zoomOut()" title="Zoom out">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <circle cx="7" cy="7" r="4"/><path d="M11 11l2.5 2.5M5 7h4"/>
-        </svg>
-      </button>
+    <div class="vp-label">3D Viewer · Drag to Rotate</div>
+    <div class="vp-controls">
+      <button class="vp-btn" id="resetCamBtn" title="Reset">↺</button>
+      <button class="vp-btn" id="autoRotBtn" title="Auto rotate">⟳</button>
+      <button class="vp-btn" id="zoomInBtn" title="Zoom in">+</button>
+      <button class="vp-btn" id="zoomOutBtn" title="Zoom out">−</button>
     </div>
-
-    <div class="viewport-hint">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2">
-        <circle cx="7" cy="7" r="5"/><path d="M7 4v3l2 2"/>
-      </svg>
-      Drag to rotate · Scroll to zoom
-    </div>
+    <div class="vp-hint">Drag to rotate · Scroll to zoom</div>
   </div>
 
-  <!-- ─── Summary Panel ─── -->
+  <!-- RIGHT SUMMARY -->
   <div class="summary-panel">
-    <div class="summary-header">
-      <div class="summary-title">Design Summary</div>
+    <div class="sum-header">Design Summary</div>
+    <div class="sum-scroll">
+      <div class="sum-sec">
+        <div class="sum-sec-title">Structure</div>
+        <div class="sum-row"><span class="sum-key">Body</span><span class="sum-val" id="s-body">Full</span></div>
+        <div class="sum-row"><span class="sum-key">Thumb</span><span class="sum-val" id="s-thumb">Full</span></div>
+        <div class="sum-row"><span class="sum-key">Knuckle</span><span class="sum-val" id="s-knuckle">3</span></div>
+        <div class="sum-row"><span class="sum-key">Gusset</span><span class="sum-val" id="s-gusset">Combination</span></div>
+        <div class="sum-row"><span class="sum-key">Tab</span><span class="sum-val" id="s-tab">2</span></div>
+        <div class="sum-row"><span class="sum-key">Puller</span><span class="sum-val" id="s-puller">2</span></div>
+        <div class="sum-row"><span class="sum-key">Palm Patch</span><span class="sum-val" id="s-palmPatch">2</span></div>
+        <div class="sum-row"><span class="sum-key">Palm Padding</span><span class="sum-val" id="s-palmPadding">3</span></div>
+        <div class="sum-row"><span class="sum-key">Piping</span><span class="sum-val" id="s-piping">Normal</span></div>
+      </div>
+      <div class="sum-sec">
+        <div class="sum-sec-title">Sew Methods</div>
+        <div class="sum-row"><span class="sum-key">Tab Method</span><span class="sum-val" id="s-tabMethod">Full</span></div>
+        <div class="sum-row"><span class="sum-key">Tab Sew</span><span class="sum-val" id="s-tabSew">2 Needle</span></div>
+        <div class="sum-row"><span class="sum-key">Puller Method</span><span class="sum-val" id="s-pullerMethod">TPR</span></div>
+        <div class="sum-row"><span class="sum-key">Gusset Sew</span><span class="sum-val" id="s-gussetSew">Inside</span></div>
+      </div>
+      <div class="sum-sec">
+        <div class="sum-sec-title">Material & Color</div>
+        <div class="sum-row"><span class="sum-key">Body Mat.</span><span class="sum-val" id="s-matBody">Genuine Leather</span></div>
+        <div class="sum-row"><span class="sum-key">Palm Mat.</span><span class="sum-val" id="s-matPalm">Genuine Leather</span></div>
+        <div class="sum-row"><span class="sum-key">Body Color</span><span class="sum-val" id="s-bodyColor">Pearl White</span></div>
+        <div class="sum-row"><span class="sum-key">Palm Color</span><span class="sum-val" id="s-palmColor">Pearl White</span></div>
+        <div class="sum-row"><span class="sum-key">Piping Color</span><span class="sum-val" id="s-pipingColor">Gray</span></div>
+      </div>
+      <div class="sum-sec">
+        <div class="sum-sec-title">Print & Logo</div>
+        <div class="sum-row"><span class="sum-key">Body Print</span><span class="sum-val" id="s-printBody">3D Print</span></div>
+        <div class="sum-row"><span class="sum-key">Logo Tab</span><span class="sum-val" id="s-logoTab">Full</span></div>
+        <div class="sum-row"><span class="sum-key">Logo Method</span><span class="sum-val" id="s-logoMethod">2D Print</span></div>
+      </div>
     </div>
-    <div class="summary-scroll">
-
-      <div class="summary-section">
-        <div class="summary-section-title">Structure</div>
-        <div class="summary-row"><span class="summary-key">Body</span><span class="summary-val" id="sum-body">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Thumb</span><span class="summary-val" id="sum-thumb">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Knuckle</span><span class="summary-val" id="sum-knuckle">3</span></div>
-        <div class="summary-row"><span class="summary-key">Gusset</span><span class="summary-val" id="sum-gusset">Combination</span></div>
-        <div class="summary-row"><span class="summary-key">Tab</span><span class="summary-val" id="sum-tab">2</span></div>
-        <div class="summary-row"><span class="summary-key">Puller</span><span class="summary-val" id="sum-puller">2</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Patch</span><span class="summary-val" id="sum-palm-patch">2</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Padding</span><span class="summary-val" id="sum-palm-padding">3</span></div>
-        <div class="summary-row"><span class="summary-key">Piping</span><span class="summary-val" id="sum-piping">Normal</span></div>
-      </div>
-
-      <div class="summary-section">
-        <div class="summary-section-title">Sew Methods</div>
-        <div class="summary-row"><span class="summary-key">Tab Method</span><span class="summary-val" id="sum-tab-method">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Tab Sew</span><span class="summary-val" id="sum-tab-sew">2 Needle</span></div>
-        <div class="summary-row"><span class="summary-key">Puller Method</span><span class="summary-val" id="sum-puller-method">TPR</span></div>
-        <div class="summary-row"><span class="summary-key">Gusset Sew</span><span class="summary-val" id="sum-gusset-sew">Inside</span></div>
-      </div>
-
-      <div class="summary-section">
-        <div class="summary-section-title">Material & Color</div>
-        <div class="summary-row"><span class="summary-key">Body Mat.</span><span class="summary-val" id="sum-mat-body">Genuine Leather</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Mat.</span><span class="summary-val" id="sum-mat-palm">Genuine Leather</span></div>
-        <div class="summary-row"><span class="summary-key">Body Color</span><span class="summary-val" id="sum-body-color">Pearl White</span></div>
-        <div class="summary-row"><span class="summary-key">Palm Color</span><span class="summary-val" id="sum-palm-color">Pearl White</span></div>
-        <div class="summary-row"><span class="summary-key">Piping Color</span><span class="summary-val" id="sum-piping-color">Gray</span></div>
-      </div>
-
-      <div class="summary-section">
-        <div class="summary-section-title">Print & Logo</div>
-        <div class="summary-row"><span class="summary-key">Body Print</span><span class="summary-val" id="sum-print-body">3D Print</span></div>
-        <div class="summary-row"><span class="summary-key">Logo Tab</span><span class="summary-val" id="sum-logo-tab">Full</span></div>
-        <div class="summary-row"><span class="summary-key">Logo Method</span><span class="summary-val" id="sum-logo-method">2D Print</span></div>
-      </div>
-
-    </div><!-- /summary-scroll -->
-
-    <!-- Costing Box -->
-    <div class="costing-box">
-      <div class="costing-title">Estimation</div>
-      <p class="note-pending" id="costing-note">Formula will be configured by admin. Values below are indicative.</p>
+    <div class="cost-box">
+      <div class="cost-title">Estimation</div>
+      <div class="cost-note">Formula will be configured by admin</div>
       <div class="smv-row">
-        <div class="smv-card">
-          <div class="smv-value" id="est-smv">—</div>
-          <div class="smv-label">SMV (min)</div>
-        </div>
-        <div class="smv-card">
-          <div class="smv-value" id="est-consumption">—</div>
-          <div class="smv-label">Consumption</div>
-        </div>
+        <div class="smv-card"><div class="smv-val" id="e-smv">—</div><div class="smv-lbl">SMV (min)</div></div>
+        <div class="smv-card"><div class="smv-val" id="e-cons">—</div><div class="smv-lbl">Consumption</div></div>
       </div>
-      <div class="costing-row"><span class="costing-label">Material</span><span class="costing-value" id="cost-material">—</span></div>
-      <div class="costing-row"><span class="costing-label">Labor</span><span class="costing-value" id="cost-labor">—</span></div>
-      <div class="costing-row"><span class="costing-label">Print & Logo</span><span class="costing-value" id="cost-print">—</span></div>
-      <div class="costing-row"><span class="costing-label">Overhead</span><span class="costing-value" id="cost-overhead">—</span></div>
-      <div class="costing-row total">
-        <span class="costing-label">Est. Total</span>
-        <span class="costing-value" id="cost-total">—</span>
-      </div>
+      <div class="cost-row"><span>Material</span><span class="cost-val" id="e-mat">TBD</span></div>
+      <div class="cost-row"><span>Labor</span><span class="cost-val" id="e-lab">TBD</span></div>
+      <div class="cost-row"><span>Print & Logo</span><span class="cost-val" id="e-prn">TBD</span></div>
+      <div class="cost-row"><span>Overhead</span><span class="cost-val" id="e-ovh">TBD</span></div>
+      <div class="cost-row total"><span>Est. Total</span><span class="cost-val" id="e-tot">TBD</span></div>
     </div>
-
-  </div><!-- /summary-panel -->
+  </div>
 
 </div><!-- /app-body -->
 
 <script>
-// ─── State ───────────────────────────────────────────────
-const config = {
-  body: 'Full', thumb: 'Full', knuckle: '3', gusset: 'Combination',
-  tab: '2', 'tab-method': 'Full', 'tab-sew': '2 Needle',
-  puller: '2', 'puller-method': 'TPR', piping: 'Normal',
-  'palm-patch': '2', 'palm-padding': '3', 'gusset-sew': 'Inside',
-  'print-body': '3D Print', 'logo-tab': 'Full', 'logo-method': '2D Print',
-  'mat-body': 'Genuine Leather', 'mat-palm': 'Genuine Leather',
-  'body-color': 'Pearl White', 'palm-color': 'Pearl White', 'piping-color': 'Gray',
-  'body-hex': '#f8f4ee', 'palm-hex': '#f8f4ee', 'piping-hex': '#8a8a8a'
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const state = {
+  body:'Full', thumb:'Full', knuckle:'3', gusset:'Combination',
+  tab:'2', puller:'2', palmPatch:'2', palmPadding:'3', piping:'Normal',
+  tabMethod:'Full', tabSew:'2 Needle', pullerMethod:'TPR', gussetSew:'Inside',
+  matBody:'Genuine Leather', matPalm:'Genuine Leather',
+  bodyColor:'Pearl White', bodyHex:'#f8f4ee',
+  palmColor:'Pearl White', palmHex:'#f8f4ee',
+  pipingColor:'Gray', pipingHex:'#8a8a8a',
+  printBody:'3D Print', logoTab:'Full', logoMethod:'2D Print'
 };
 
-// ─── Tab switching ────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    const tabs = ['structure','sew','material','color','print'];
-    b.classList.toggle('active', tabs[i] === name);
+// ═══════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
   });
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-}
+});
 
-// ─── Chip selection ───────────────────────────────────────
-function selectChip(el, key) {
-  const parent = el.closest('.option-chips');
-  parent.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  config[key] = el.textContent.trim();
-  updateSummary();
-  updateModel();
-}
+// ═══════════════════════════════════════════
+// CHIP CLICKS
+// ═══════════════════════════════════════════
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    const key = this.dataset.key;
+    const val = this.dataset.val;
+    // deselect siblings with same key
+    document.querySelectorAll('.chip[data-key="' + key + '"]').forEach(c => c.classList.remove('sel'));
+    this.classList.add('sel');
+    state[key] = val;
+    updateSummary();
+    updateModelColors();
+  });
+});
 
-// ─── Material selection ───────────────────────────────────
-function selectMat(el, groupId) {
-  const parent = el.closest('.material-grid');
-  parent.querySelectorAll('.mat-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  const key = groupId === 'mat-body' ? 'mat-body' : 'mat-palm';
-  config[key] = el.querySelector('.mat-name').textContent;
-  updateSummary();
-  updateModel();
-}
+// ═══════════════════════════════════════════
+// MATERIAL CLICKS
+// ═══════════════════════════════════════════
+document.querySelectorAll('.mat-card').forEach(card => {
+  card.addEventListener('click', function() {
+    const key = this.dataset.key;
+    const val = this.dataset.val;
+    document.querySelectorAll('.mat-card[data-key="' + key + '"]').forEach(c => c.classList.remove('sel'));
+    this.classList.add('sel');
+    state[key] = val;
+    updateSummary();
+  });
+});
 
-// ─── Swatch selection ─────────────────────────────────────
-const colorNames = {
-  '#f8f4ee': 'Pearl White', '#f5f2ec': 'Off White',
-  '#f9f9f9': 'Snow White', '#8a8a8a': 'Gray', '#1a1a1a': 'Black'
-};
+// ═══════════════════════════════════════════
+// SWATCH CLICKS
+// ═══════════════════════════════════════════
+document.querySelectorAll('.sw').forEach(sw => {
+  sw.addEventListener('click', function() {
+    const key = this.dataset.key;
+    const val = this.dataset.val;
+    const hex = this.dataset.hex;
+    document.querySelectorAll('.sw[data-key="' + key + '"]').forEach(s => s.classList.remove('sel'));
+    this.classList.add('sel');
+    state[key] = val;
+    // store hex
+    if (key === 'bodyColor') { state.bodyHex = hex; document.getElementById('bodyColorName').textContent = val; }
+    if (key === 'palmColor') { state.palmHex = hex; document.getElementById('palmColorName').textContent = val; }
+    if (key === 'pipingColor') { state.pipingHex = hex; document.getElementById('pipingColorName').textContent = val; }
+    updateSummary();
+    updateModelColors();
+  });
+});
 
-function selectSwatch(el, groupId, colorKey) {
-  const parent = document.getElementById(groupId);
-  parent.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
-  el.classList.add('selected');
-  const hex = el.style.background;
-  const name = el.title;
-  config[colorKey] = name;
-  const hexKey = colorKey + '-hex';
-  config[hexKey] = hex;
-  document.getElementById(colorKey + '-name') && (document.getElementById(colorKey + '-name').textContent = name);
-  updateSummary();
-  updateModelColors();
-}
-
-// ─── Logo upload ──────────────────────────────────────────
-function handleLogoUpload(event) {
-  const file = event.target.files[0];
+// ═══════════════════════════════════════════
+// LOGO UPLOAD
+// ═══════════════════════════════════════════
+document.getElementById('logoFile').addEventListener('change', function() {
+  const file = this.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = e => {
     document.getElementById('logo-img').src = e.target.result;
-    document.getElementById('logo-filename').textContent = file.name;
+    document.getElementById('logo-fname').textContent = file.name;
     document.getElementById('logo-preview').style.display = 'block';
   };
   reader.readAsDataURL(file);
-}
+});
+document.querySelector('.logo-upload-label').addEventListener('click', function() {
+  document.getElementById('logoFile').click();
+});
 
-// ─── Summary update ───────────────────────────────────────
+// ═══════════════════════════════════════════
+// SUMMARY UPDATE
+// ═══════════════════════════════════════════
 function updateSummary() {
   const map = {
-    'sum-body': config.body, 'sum-thumb': config.thumb,
-    'sum-knuckle': config.knuckle, 'sum-gusset': config.gusset,
-    'sum-tab': config.tab, 'sum-puller': config.puller,
-    'sum-palm-patch': config['palm-patch'], 'sum-palm-padding': config['palm-padding'],
-    'sum-piping': config.piping,
-    'sum-tab-method': config['tab-method'], 'sum-tab-sew': config['tab-sew'],
-    'sum-puller-method': config['puller-method'], 'sum-gusset-sew': config['gusset-sew'],
-    'sum-mat-body': config['mat-body'], 'sum-mat-palm': config['mat-palm'],
-    'sum-body-color': config['body-color'], 'sum-palm-color': config['palm-color'],
-    'sum-piping-color': config['piping-color'],
-    'sum-print-body': config['print-body'],
-    'sum-logo-tab': config['logo-tab'], 'sum-logo-method': config['logo-method']
+    's-body': state.body, 's-thumb': state.thumb, 's-knuckle': state.knuckle,
+    's-gusset': state.gusset, 's-tab': state.tab, 's-puller': state.puller,
+    's-palmPatch': state.palmPatch, 's-palmPadding': state.palmPadding,
+    's-piping': state.piping, 's-tabMethod': state.tabMethod,
+    's-tabSew': state.tabSew, 's-pullerMethod': state.pullerMethod,
+    's-gussetSew': state.gussetSew, 's-matBody': state.matBody,
+    's-matPalm': state.matPalm, 's-bodyColor': state.bodyColor,
+    's-palmColor': state.palmColor, 's-pipingColor': state.pipingColor,
+    's-printBody': state.printBody, 's-logoTab': state.logoTab,
+    's-logoMethod': state.logoMethod
   };
   for (const [id, val] of Object.entries(map)) {
     const el = document.getElementById(id);
-    if (el) { el.textContent = val || '—'; el.classList.toggle('empty', !val); }
+    if (el) el.textContent = val || '—';
   }
-  // Placeholder costing — admin will replace with real formula
-  document.getElementById('est-smv').textContent = '—';
-  document.getElementById('est-consumption').textContent = '—';
-  document.getElementById('cost-material').textContent = 'TBD';
-  document.getElementById('cost-labor').textContent = 'TBD';
-  document.getElementById('cost-print').textContent = 'TBD';
-  document.getElementById('cost-overhead').textContent = 'TBD';
-  document.getElementById('cost-total').textContent = 'TBD';
 }
 
-// ─── Reset ────────────────────────────────────────────────
-function resetConfig() {
-  if (!confirm('Reset all selections to default?')) return;
-  location.reload();
+// ═══════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════
+function resetAll() {
+  if (confirm('Reset all selections to default?')) location.reload();
 }
 
-// ─── Save/Export stubs ────────────────────────────────────
-function saveDesign() {
-  const data = JSON.stringify(config, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
+// ═══════════════════════════════════════════
+// SAVE DRAFT
+// ═══════════════════════════════════════════
+function saveDraft() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'glove-design-' + Date.now() + '.json';
   a.click();
 }
 
-function exportSummary() {
-  window.print();
-}
+// ═══════════════════════════════════════════
+// EXPORT PDF
+// ═══════════════════════════════════════════
+function exportPDF() { window.print(); }
 
-// ─── THREE.JS 3D VIEWER ───────────────────────────────────
-let scene, camera, renderer, gloveGroup, autoRotate = false;
-let isDragging = false, prevMouse = { x: 0, y: 0 };
-let bodyMesh = null, palmMesh = null;
+// ═══════════════════════════════════════════
+// THREE.JS VIEWER
+// ═══════════════════════════════════════════
+let scene, camera, renderer, gloveGroup;
+let autoRotate = false;
+let isDragging = false;
+let prevMouse = {x:0, y:0};
+let bodyMeshes = [], palmMesh = null;
 
 function initThree() {
   const canvas = document.getElementById('three-canvas');
   const vp = document.getElementById('viewport');
-
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.2;
-
   scene = new THREE.Scene();
-  scene.background = null;
 
   const w = vp.clientWidth, h = vp.clientHeight;
-  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
   camera.position.set(0, 0.5, 3.5);
 
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambient);
-
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
   const key = new THREE.DirectionalLight(0xffffff, 1.2);
-  key.position.set(3, 5, 4);
-  key.castShadow = true;
+  key.position.set(3,5,4); key.castShadow = true;
   scene.add(key);
-
   const fill = new THREE.DirectionalLight(0xe8eeff, 0.5);
-  fill.position.set(-3, 2, -2);
-  scene.add(fill);
-
+  fill.position.set(-3,2,-2); scene.add(fill);
   const rim = new THREE.DirectionalLight(0xffffff, 0.3);
-  rim.position.set(0, -3, -4);
-  scene.add(rim);
+  rim.position.set(0,-3,-4); scene.add(rim);
 
   gloveGroup = new THREE.Group();
   scene.add(gloveGroup);
@@ -1246,40 +618,33 @@ function initThree() {
   resizeRenderer();
   animate();
 
-  // Drag to rotate
-  canvas.addEventListener('mousedown', e => {
-    isDragging = true;
-    prevMouse = { x: e.clientX, y: e.clientY };
-  });
+  // Drag
+  canvas.addEventListener('mousedown', e => { isDragging=true; prevMouse={x:e.clientX,y:e.clientY}; });
   window.addEventListener('mousemove', e => {
-    if (!isDragging || !gloveGroup) return;
-    const dx = (e.clientX - prevMouse.x) * 0.008;
-    const dy = (e.clientY - prevMouse.y) * 0.008;
-    gloveGroup.rotation.y += dx;
-    gloveGroup.rotation.x += dy;
-    prevMouse = { x: e.clientX, y: e.clientY };
+    if (!isDragging) return;
+    gloveGroup.rotation.y += (e.clientX - prevMouse.x) * 0.008;
+    gloveGroup.rotation.x += (e.clientY - prevMouse.y) * 0.008;
+    prevMouse = {x:e.clientX, y:e.clientY};
   });
   window.addEventListener('mouseup', () => isDragging = false);
 
   // Touch
   let lastTouch = null;
-  canvas.addEventListener('touchstart', e => {
-    lastTouch = e.touches[0];
-  });
+  canvas.addEventListener('touchstart', e => { lastTouch = e.touches[0]; }, {passive:true});
   canvas.addEventListener('touchmove', e => {
-    if (!lastTouch || !gloveGroup) return;
+    if (!lastTouch) return;
     const t = e.touches[0];
     gloveGroup.rotation.y += (t.clientX - lastTouch.clientX) * 0.01;
     gloveGroup.rotation.x += (t.clientY - lastTouch.clientY) * 0.01;
     lastTouch = t;
     e.preventDefault();
-  }, { passive: false });
+  }, {passive:false});
 
-  // Scroll to zoom
+  // Zoom
   canvas.addEventListener('wheel', e => {
     camera.position.z = Math.max(1.5, Math.min(8, camera.position.z + e.deltaY * 0.005));
     e.preventDefault();
-  }, { passive: false });
+  }, {passive:false});
 
   window.addEventListener('resize', resizeRenderer);
 }
@@ -1288,201 +653,150 @@ function resizeRenderer() {
   const vp = document.getElementById('viewport');
   const w = vp.clientWidth, h = vp.clientHeight;
   renderer.setSize(w, h);
-  camera.aspect = w / h;
+  camera.aspect = w/h;
   camera.updateProjectionMatrix();
 }
 
 function animate() {
   requestAnimationFrame(animate);
   if (autoRotate && gloveGroup) gloveGroup.rotation.y += 0.005;
-  renderer.render(scene, camera);
+  if (renderer && scene && camera) renderer.render(scene, camera);
 }
 
-// ─── Demo Model (placeholder glove shape) ─────────────────
 function loadDemoModel() {
-  document.getElementById('upload-overlay').classList.add('hidden');
-
-  // Clear existing
+  document.getElementById('uploadOverlay').classList.add('hidden');
   while (gloveGroup.children.length) gloveGroup.remove(gloveGroup.children[0]);
+  bodyMeshes = []; palmMesh = null;
 
-  const bodyColor = new THREE.Color(config['body-hex'] || '#f8f4ee');
-  const palmColor = new THREE.Color(config['palm-hex'] || '#f8f4ee');
+  const bodyColor = new THREE.Color(state.bodyHex || '#f8f4ee');
+  const palmColor = new THREE.Color(state.palmHex || '#f8f4ee');
 
-  // Body material (PBR)
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: bodyColor,
-    roughness: 0.6,
-    metalness: 0.0,
-  });
+  const bodyMat = new THREE.MeshStandardMaterial({color:bodyColor, roughness:0.6, metalness:0});
+  const palmMat = new THREE.MeshStandardMaterial({color:palmColor, roughness:0.8, metalness:0});
+  const accentMat = new THREE.MeshStandardMaterial({color:0x0047ff, roughness:0.5, metalness:0});
 
-  const palmMat = new THREE.MeshStandardMaterial({
-    color: palmColor,
-    roughness: 0.8,
-    metalness: 0.0,
-  });
+  // Body cylinder
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.48,1.4,32), bodyMat);
+  gloveGroup.add(body); bodyMeshes.push(body);
 
-  // Glove Body (stylized approximation)
-  const bodyGeo = new THREE.CylinderGeometry(0.42, 0.48, 1.4, 32, 4, false);
-  bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-  bodyMesh.position.set(0, 0, 0);
-  bodyMesh.castShadow = true;
-  gloveGroup.add(bodyMesh);
+  // Cuff
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.52,0.48,0.5,32), bodyMat);
+  cuff.position.set(0,-0.95,0); gloveGroup.add(cuff); bodyMeshes.push(cuff);
 
-  // Wrist/cuff
-  const cuffGeo = new THREE.CylinderGeometry(0.52, 0.48, 0.5, 32);
-  const cuff = new THREE.Mesh(cuffGeo, bodyMat);
-  cuff.position.set(0, -0.95, 0);
-  gloveGroup.add(cuff);
+  // Palm
+  palmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.7,0.1), palmMat);
+  palmMesh.position.set(0,-0.1,0.44); gloveGroup.add(palmMesh);
 
-  // Palm patch
-  palmMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6, 0.7, 0.1),
-    palmMat
-  );
-  palmMesh.position.set(0, -0.1, 0.44);
-  gloveGroup.add(palmMesh);
-
-  // Fingers (4)
-  const fingerPositions = [[-0.28,0.95,0],[−0.09,1.05,0],[0.10,1.05,0],[0.29,0.95,0]];
-  // Fix: use actual numbers
+  // Fingers
   const fPos = [[-0.28,0.95,0],[-0.09,1.05,0],[0.10,1.05,0],[0.29,0.95,0]];
   fPos.forEach(([x,y,z]) => {
-    const fg = new THREE.CylinderGeometry(0.09, 0.11, 0.65, 16);
-    const fm = new THREE.Mesh(fg, bodyMat);
-    fm.position.set(x, y, z);
-    gloveGroup.add(fm);
-    // Fingertip
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 8), bodyMat);
-    tip.position.set(x, y + 0.33, z);
-    gloveGroup.add(tip);
+    const fg = new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.11,0.65,16), bodyMat);
+    fg.position.set(x,y,z); gloveGroup.add(fg); bodyMeshes.push(fg);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.09,16,8), bodyMat);
+    tip.position.set(x,y+0.33,z); gloveGroup.add(tip); bodyMeshes.push(tip);
   });
 
   // Thumb
-  const thumbGeo = new THREE.CylinderGeometry(0.09, 0.11, 0.55, 16);
-  const thumb = new THREE.Mesh(thumbGeo, bodyMat);
-  thumb.rotation.z = Math.PI / 4;
-  thumb.position.set(-0.56, 0.6, 0.1);
-  gloveGroup.add(thumb);
-  const thumbTip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 8), bodyMat);
-  thumbTip.position.set(-0.72, 0.78, 0.1);
-  gloveGroup.add(thumbTip);
+  const thumb = new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.11,0.55,16), bodyMat);
+  thumb.rotation.z = Math.PI/4; thumb.position.set(-0.56,0.6,0.1);
+  gloveGroup.add(thumb); bodyMeshes.push(thumb);
+  const thumbTip = new THREE.Mesh(new THREE.SphereGeometry(0.09,16,8), bodyMat);
+  thumbTip.position.set(-0.72,0.78,0.1); gloveGroup.add(thumbTip); bodyMeshes.push(thumbTip);
 
-  // Gussets (knuckle accents)
-  for (let i = 0; i < 4; i++) {
-    const x = -0.28 + i * 0.19;
-    const kg = new THREE.BoxGeometry(0.15, 0.04, 0.18);
-    const km = new THREE.Mesh(kg, new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.5 }));
-    km.position.set(x, 0.72, 0.35);
-    gloveGroup.add(km);
-  }
+  // Tab accent
+  const tab = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.12,0.06), accentMat);
+  tab.position.set(0.38,-1.16,0.1); gloveGroup.add(tab);
 
-  // Tab (wrist strap)
-  const tabGeo = new THREE.BoxGeometry(0.3, 0.12, 0.06);
-  const tabMat = new THREE.MeshStandardMaterial({ color: 0x0047ff, roughness: 0.5 });
-  const tab = new THREE.Mesh(tabGeo, tabMat);
-  tab.position.set(0.38, -1.16, 0.1);
-  gloveGroup.add(tab);
-
-  gloveGroup.position.set(0, -0.2, 0);
+  gloveGroup.position.set(0,-0.2,0);
   autoRotate = true;
 }
 
-// ─── Load real 3D model ────────────────────────────────────
-function loadModel(event) {
-  const file = event.target.files[0];
+function updateModelColors() {
+  if (!bodyMeshes.length && !palmMesh) return;
+  const bc = new THREE.Color(state.bodyHex || '#f8f4ee');
+  const pc = new THREE.Color(state.palmHex || '#f8f4ee');
+  bodyMeshes.forEach(m => { if (m.material) m.material.color.set(bc); });
+  if (palmMesh) palmMesh.material.color.set(pc);
+}
+
+// Model file upload
+document.getElementById('uploadBox').addEventListener('click', () => {
+  document.getElementById('modelFile').click();
+});
+
+document.getElementById('modelFile').addEventListener('change', function() {
+  const file = this.files[0];
   if (!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
   const url = URL.createObjectURL(file);
-
-  document.getElementById('upload-overlay').classList.add('hidden');
+  document.getElementById('uploadOverlay').classList.add('hidden');
   while (gloveGroup.children.length) gloveGroup.remove(gloveGroup.children[0]);
+  bodyMeshes = []; palmMesh = null;
 
   if (ext === 'glb' || ext === 'gltf') {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
-    script.onload = () => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+    s.onload = () => {
       const loader = new THREE.GLTFLoader();
       loader.load(url, gltf => {
         gltf.scene.traverse(child => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            bodyMesh = child;
-          }
+          if (child.isMesh) { child.castShadow = true; bodyMeshes.push(child); }
         });
         gloveGroup.add(gltf.scene);
         fitCamera();
-        updateModelColors();
       });
     };
-    document.head.appendChild(script);
+    document.head.appendChild(s);
   } else if (ext === 'obj') {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js';
-    script.onload = () => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js';
+    s.onload = () => {
       const loader = new THREE.OBJLoader();
       loader.load(url, obj => {
         obj.traverse(child => {
           if (child.isMesh) {
+            child.material = new THREE.MeshStandardMaterial({color:0xf8f4ee,roughness:0.6});
             child.castShadow = true;
-            child.material = new THREE.MeshStandardMaterial({ color: 0xf8f4ee, roughness: 0.6 });
-            bodyMesh = child;
+            bodyMeshes.push(child);
           }
         });
         gloveGroup.add(obj);
         fitCamera();
-        updateModelColors();
       });
     };
-    document.head.appendChild(script);
-  } else {
-    alert('Please use OBJ, GLB, or GLTF format. FBX requires additional server setup.');
-    document.getElementById('upload-overlay').classList.remove('hidden');
+    document.head.appendChild(s);
   }
-}
+});
+
+document.getElementById('demoLink').addEventListener('click', loadDemoModel);
 
 function fitCamera() {
   const box = new THREE.Box3().setFromObject(gloveGroup);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z);
-  camera.position.z = maxDim * 2;
+  camera.position.z = Math.max(size.x,size.y,size.z) * 2;
   gloveGroup.position.sub(center);
 }
 
-// ─── Update model colors when color changes ────────────────
-function updateModelColors() {
-  if (!gloveGroup || gloveGroup.children.length === 0) return;
-  const bodyHex = config['body-hex'] || '#f8f4ee';
-  gloveGroup.traverse(child => {
-    if (child.isMesh && child !== palmMesh) {
-      if (child.material && !child.material._isPiping) {
-        child.material.color = new THREE.Color(bodyHex);
-      }
-    }
-  });
-  if (palmMesh) {
-    palmMesh.material.color = new THREE.Color(config['palm-hex'] || '#f8f4ee');
-  }
-}
-
-function updateModel() { updateModelColors(); }
-
-// ─── Camera controls ──────────────────────────────────────
-function resetCamera() {
-  camera.position.set(0, 0.5, 3.5);
-  if (gloveGroup) { gloveGroup.rotation.set(0, 0, 0); }
-}
-
-function toggleAutoRotate() {
+// Controls
+document.getElementById('resetCamBtn').addEventListener('click', () => {
+  camera.position.set(0,0.5,3.5);
+  gloveGroup.rotation.set(0,0,0);
+});
+document.getElementById('autoRotBtn').addEventListener('click', function() {
   autoRotate = !autoRotate;
-  const btn = document.getElementById('rotate-btn');
-  btn.style.color = autoRotate ? 'var(--accent)' : '';
-}
+  this.style.color = autoRotate ? 'var(--acc)' : '';
+});
+document.getElementById('zoomInBtn').addEventListener('click', () => {
+  camera.position.z = Math.max(1.5, camera.position.z - 0.4);
+});
+document.getElementById('zoomOutBtn').addEventListener('click', () => {
+  camera.position.z = Math.min(8, camera.position.z + 0.4);
+});
 
-function zoomIn()  { camera.position.z = Math.max(1.5, camera.position.z - 0.4); }
-function zoomOut() { camera.position.z = Math.min(8, camera.position.z + 0.4); }
-
-// ─── Init ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
 initThree();
 updateSummary();
 </script>
