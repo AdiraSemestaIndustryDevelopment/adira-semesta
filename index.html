@@ -753,14 +753,10 @@
 
 </div>
 
-<!-- ─── Firebase ─── -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence, signOut as fbSignOut, onAuthStateChanged }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+<!-- ─── Firebase (compat mode — same as working project) ─── -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
   const firebaseConfig = {
     apiKey:            "AIzaSyCEJctdDV2KPa7zQ9JmooCdb1Ccw0U95cM",
     authDomain:        "adira-semesta-industry.firebaseapp.com",
@@ -770,74 +766,55 @@
     appId:             "1:32858218778:web:0a3156a5dbb41494244ca3"
   };
 
-  const app  = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getFirestore(app);
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  // Set persistence so login survives page refresh
-  setPersistence(auth, browserLocalPersistence);
-
-  window.signInWithGoogle = async () => {
-    const btn     = document.getElementById('btn-login');
-    const spinner = document.getElementById('login-spinner');
-    const btnText = document.getElementById('btn-login-text');
-    btn.disabled = true;
-    spinner.style.display = 'block';
-    btnText.textContent = 'Signing in…';
-    try {
-      await signInWithPopup(auth, provider);
-    } catch(e) {
-      console.error(e);
-      btn.disabled = false;
-      spinner.style.display = 'none';
-      btnText.textContent = 'Continue with Google';
-    }
+  // ── Whitelist: tambah email user di sini ──
+  const USER_WHITELIST = {
+    // ADMIN
+    "juanmarconathaniel@gmail.com": { role: "admin", name: "Juan Marco Nathaniel Hastan" },
+    // Tambah user lain di bawah ini:
+    // "email@gmail.com": { role: "user", name: "Nama User" },
   };
+  // ─────────────────────────────────────────
 
-  window.signOut = async () => {
-    await fbSignOut(auth);
-  };
+  firebase.initializeApp(firebaseConfig);
+  const auth     = firebase.auth();
+  const provider = new firebase.auth.GoogleAuthProvider();
 
-  onAuthStateChanged(auth, async (user) => {
-    const overlay = document.getElementById('auth-overlay');
-    const portal  = document.getElementById('main-portal');
-    const denied  = document.getElementById('access-denied');
+  const btnLogin  = document.getElementById('btn-login');
+  const btnText   = document.getElementById('btn-login-text');
+  const spinner   = document.getElementById('login-spinner');
+  const overlay   = document.getElementById('auth-overlay');
+  const portal    = document.getElementById('main-portal');
+  const denied    = document.getElementById('access-denied');
 
+  // ── Auth state listener ──
+  auth.onAuthStateChanged((user) => {
     if (!user) {
       overlay.classList.remove('hidden');
       portal.classList.remove('visible');
       denied.style.display = 'none';
-      // Reset button
-      document.getElementById('btn-login').disabled = false;
-      document.getElementById('login-spinner').style.display = 'none';
-      document.getElementById('btn-login-text').textContent = 'Continue with Google';
+      btnLogin.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Continue with Google';
       return;
     }
 
-    // Check Firestore whitelist
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-
-    if (!userDoc.exists() || !userDoc.data().active) {
+    const userInfo = USER_WHITELIST[user.email];
+    if (!userInfo) {
+      // Not in whitelist
       denied.style.display = 'flex';
       document.getElementById('denied-msg').textContent =
-        `${user.email} is not authorized. Contact your administrator.`;
-      document.getElementById('btn-login').disabled = false;
-      document.getElementById('login-spinner').style.display = 'none';
-      document.getElementById('btn-login-text').textContent = 'Try another account';
+        user.email + ' is not authorized. Contact your administrator.';
+      btnLogin.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Try another account';
       return;
     }
 
     // Authorized — show portal
-    const data = userDoc.data();
-    const role = data.role || 'user';
-
     overlay.classList.add('hidden');
     portal.classList.add('visible');
     denied.style.display = 'none';
 
-    // Populate nav
     document.getElementById('user-name').textContent = user.displayName || user.email;
     const photo = document.getElementById('user-photo');
     if (user.photoURL) {
@@ -849,13 +826,39 @@
       initEl.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
     }
 
+    const role = userInfo.role || 'user';
     const roleBadge = document.getElementById('role-badge');
     roleBadge.textContent = role;
     roleBadge.className = 'role-badge role-' + (role === 'admin' ? 'admin' : 'user');
-
     document.getElementById('stat-role-display').textContent =
       role.charAt(0).toUpperCase() + role.slice(1);
   });
+
+  // ── Login button ──
+  window.signInWithGoogle = () => {
+    btnLogin.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Membuka Google Login...';
+
+    auth.signInWithPopup(provider)
+      .then((result) => {
+        const userInfo = USER_WHITELIST[result.user.email];
+        if (!userInfo) {
+          auth.signOut();
+        }
+      })
+      .catch((err) => {
+        btnLogin.disabled = false;
+        spinner.style.display = 'none';
+        btnText.textContent = 'Continue with Google';
+        if (err.code !== 'auth/popup-closed-by-user') {
+          console.error('Login error:', err.message);
+        }
+      });
+  };
+
+  // ── Sign out ──
+  window.signOut = () => { auth.signOut(); };
 </script>
 </body>
 </html>
