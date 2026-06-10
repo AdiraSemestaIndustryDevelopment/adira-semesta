@@ -71,6 +71,9 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{padding:5px 11px;background:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.35);border-radius:8px;font-size:12px;color:var(--t2);cursor:pointer;transition:var(--tr);user-select:none}
 .chip:hover{border-color:rgba(0,71,255,.3);color:var(--acc)}
+.chip-none{color:#c0392b;border-color:rgba(192,57,43,0.25);background:rgba(192,57,43,0.06);display:inline-flex;align-items:center;justify-content:center;min-width:36px}
+.chip-none:hover{border-color:rgba(192,57,43,0.5);color:#c0392b;background:rgba(192,57,43,0.12)}
+.chip-none.sel{background:rgba(192,57,43,0.12);border-color:rgba(192,57,43,0.5);color:#c0392b}
 .chip.sel{background:rgba(0,71,255,0.15);border-color:rgba(0,71,255,.4);color:var(--acc);font-weight:500}
 .swatches{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 .sw{width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:var(--tr)}
@@ -178,6 +181,13 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
           <div class="chip" data-key="gusset" data-val="Full Stitchless">Full Stitchless</div>
           <div class="chip" data-key="gusset" data-val="Hole Stitchless">Hole Stitchless</div>
         </div></div>
+        <div class="cg"><div class="cg-label">LOV</div><div class="chips">
+          <div class="chip" data-key="lov" data-val="1">1</div>
+          <div class="chip sel" data-key="lov" data-val="2">2</div>
+          <div class="chip" data-key="lov" data-val="3">3</div>
+          <div class="chip" data-key="lov" data-val="4">4</div>
+          <div class="chip" data-key="lov" data-val="5">5</div>
+        </div></div>
         <div class="cg"><div class="cg-label">Tab Pattern</div><div class="chips">
           <div class="chip" data-key="tab" data-val="1">1</div>
           <div class="chip sel" data-key="tab" data-val="2">2</div>
@@ -186,6 +196,7 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
           <div class="chip" data-key="tab" data-val="5">5</div>
         </div></div>
         <div class="cg"><div class="cg-label">Puller Pattern</div><div class="chips">
+          <div class="chip chip-none" data-key="puller" data-val="None" title="No puller"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;vertical-align:middle"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><line x1="4.5" y1="13.5" x2="13.5" y2="4.5" stroke="currentColor" stroke-width="1.5"/></svg></div>
           <div class="chip" data-key="puller" data-val="1">1</div>
           <div class="chip sel" data-key="puller" data-val="2">2</div>
           <div class="chip" data-key="puller" data-val="3">3</div>
@@ -193,6 +204,7 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
           <div class="chip" data-key="puller" data-val="5">5</div>
         </div></div>
         <div class="cg"><div class="cg-label">Palm Patch</div><div class="chips">
+          <div class="chip chip-none" data-key="palmPatch" data-val="None" title="No palm patch"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;vertical-align:middle"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><line x1="4.5" y1="13.5" x2="13.5" y2="4.5" stroke="currentColor" stroke-width="1.5"/></svg></div>
           <div class="chip" data-key="palmPatch" data-val="1">1</div>
           <div class="chip sel" data-key="palmPatch" data-val="2">2</div>
           <div class="chip" data-key="palmPatch" data-val="3">3</div>
@@ -200,6 +212,7 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
           <div class="chip" data-key="palmPatch" data-val="5">5</div>
         </div></div>
         <div class="cg"><div class="cg-label">Palm Padding</div><div class="chips">
+          <div class="chip chip-none" data-key="palmPadding" data-val="None" title="No palm padding"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px;vertical-align:middle"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><line x1="4.5" y1="13.5" x2="13.5" y2="4.5" stroke="currentColor" stroke-width="1.5"/></svg></div>
           <div class="chip" data-key="palmPadding" data-val="1">1</div>
           <div class="chip" data-key="palmPadding" data-val="2">2</div>
           <div class="chip sel" data-key="palmPadding" data-val="3">3</div>
@@ -349,6 +362,7 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
         <div class="sum-row"><span class="sum-key">Thumb</span><span class="sum-val" id="s-thumb">Full</span></div>
         <div class="sum-row"><span class="sum-key">Knuckle</span><span class="sum-val" id="s-knuckle">3</span></div>
         <div class="sum-row"><span class="sum-key">Gusset</span><span class="sum-val" id="s-gusset">Combination</span></div>
+        <div class="sum-row"><span class="sum-key">LOV</span><span class="sum-val" id="s-lov">2</span></div>
         <div class="sum-row"><span class="sum-key">Tab</span><span class="sum-val" id="s-tab">2</span></div>
         <div class="sum-row"><span class="sum-key">Puller</span><span class="sum-val" id="s-puller">2</span></div>
         <div class="sum-row"><span class="sum-key">Palm Patch</span><span class="sum-val" id="s-palmPatch">2</span></div>
@@ -395,7 +409,7 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
 // ═══ STATE ═══
 const state = {
   body:'Full',thumb:'Full',knuckle:'3',gusset:'Combination',
-  tab:'2',puller:'2',palmPatch:'2',palmPadding:'3',piping:'Normal',
+  tab:'2',lov:'2',puller:'2',palmPatch:'2',palmPadding:'3',piping:'Normal',
   tabMethod:'Full',tabSew:'2 Needle',pullerMethod:'TPR',gussetSew:'Inside',
   matBody:'Genuine Leather',matPalm:'Genuine Leather',
   bodyColor:'Pearl White',bodyHex:'#f8f4ee',
@@ -463,6 +477,9 @@ const PART_FOCUS = {
   // seperti melihat dari sudut 30° di atas tangan ke arah gusset jari
   // → phi kecil (dari atas), lookAt di area pangkal jari, dist dekat
   'gusset'      : { lookAt:[0, 0.62, 0.0],   dist:0.75, phi:0.72, theta:0.05 },
+
+  // LOV → area pergelangan / wrist, overview dari depan
+  'lov'         : { lookAt:[0, -0.35,-0.05], dist:0.85, phi:1.45, theta:0.05 },
   'gussetSew'   : { lookAt:[0, 0.62, 0.0],   dist:0.75, phi:0.72, theta:0.05 },
 
   // ── 3333: BODY ────────────────────────────────────────────────
@@ -695,7 +712,7 @@ document.getElementById('logoFile').addEventListener('change',function(){
 
 // ═══ SUMMARY ═══
 function updateSummary(){
-  const m={'s-body':state.body,'s-thumb':state.thumb,'s-knuckle':state.knuckle,'s-gusset':state.gusset,'s-tab':state.tab,'s-puller':state.puller,'s-palmPatch':state.palmPatch,'s-palmPadding':state.palmPadding,'s-piping':state.piping,'s-tabMethod':state.tabMethod,'s-tabSew':state.tabSew,'s-pullerMethod':state.pullerMethod,'s-gussetSew':state.gussetSew,'s-matBody':state.matBody,'s-matPalm':state.matPalm,'s-bodyColor':state.bodyColor,'s-palmColor':state.palmColor,'s-pipingColor':state.pipingColor,'s-printBody':state.printBody,'s-logoTab':state.logoTab,'s-logoMethod':state.logoMethod};
+  const m={'s-body':state.body,'s-thumb':state.thumb,'s-knuckle':state.knuckle,'s-gusset':state.gusset,'s-lov':state.lov,'s-tab':state.tab,'s-puller':state.puller,'s-palmPatch':state.palmPatch,'s-palmPadding':state.palmPadding,'s-piping':state.piping,'s-tabMethod':state.tabMethod,'s-tabSew':state.tabSew,'s-pullerMethod':state.pullerMethod,'s-gussetSew':state.gussetSew,'s-matBody':state.matBody,'s-matPalm':state.matPalm,'s-bodyColor':state.bodyColor,'s-palmColor':state.palmColor,'s-pipingColor':state.pipingColor,'s-printBody':state.printBody,'s-logoTab':state.logoTab,'s-logoMethod':state.logoMethod};
   for(const[id,val] of Object.entries(m)){const el=document.getElementById(id);if(el)el.textContent=val||'—';}
 }
 function resetAll(){if(confirm('Reset all to default?'))location.reload();}
