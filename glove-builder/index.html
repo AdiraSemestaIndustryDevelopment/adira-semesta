@@ -29,10 +29,10 @@ header{height:60px;background:var(--white);border-bottom:1px solid var(--border)
 .btn-pri{padding:7px 18px;border:none;border-radius:10px;background:var(--acc);color:#fff;font-family:'Sora',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:var(--tr)}
 .btn-pri:hover{background:#0038d4}
 .app-body{flex:1;display:flex;overflow:hidden}
-.config-panel{width:300px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
-.tab-nav{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.config-panel{width:320px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.tab-nav{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;gap:0}
 .tab-nav::-webkit-scrollbar{display:none}
-.tab-btn{padding:12px 10px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:'Sora',sans-serif;font-size:10px;font-weight:500;color:var(--t3);cursor:pointer;white-space:nowrap;transition:var(--tr);text-transform:uppercase;letter-spacing:.04em;margin-bottom:-1px}
+.tab-btn{padding:9px 8px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:'Sora',sans-serif;font-size:9px;font-weight:600;color:var(--t3);cursor:pointer;white-space:nowrap;transition:var(--tr);text-transform:uppercase;letter-spacing:.05em;margin-bottom:-1px;flex:1;text-align:center}
 .tab-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
 .tab-btn:hover:not(.active){color:var(--t2)}
 .config-scroll{flex:1;overflow-y:auto;padding:16px}
@@ -369,6 +369,74 @@ const state = {
   printBody:'3D Print',logoTab:'Full',logoMethod:'2D Print'
 };
 
+// ═══ MODEL MAP — daftarkan file GLB per pilihan ═══
+// Format: 'PART_KEY/VALUE' : 'path/to/file.glb'
+// Letakkan file GLB di folder: glove-builder/models/
+// Jika file tidak ada, model saat ini tetap dipakai (tidak berubah)
+const MODEL_MAP = {
+  // BODY
+  'body/Full'              : 'models/body_full.glb',
+  'body/Combination'       : 'models/body_combination.glb',
+  // KNUCKLE
+  'knuckle/1'              : 'models/knuckle_1.glb',
+  'knuckle/2'              : 'models/knuckle_2.glb',
+  'knuckle/3'              : 'models/knuckle_3.glb',
+  'knuckle/4'              : 'models/knuckle_4.glb',
+  'knuckle/5'              : 'models/knuckle_5.glb',
+  // TAB
+  'tab/1'                  : 'models/tab_1.glb',
+  'tab/2'                  : 'models/tab_2.glb',
+  'tab/3'                  : 'models/tab_3.glb',
+  'tab/4'                  : 'models/tab_4.glb',
+  'tab/5'                  : 'models/tab_5.glb',
+  // PULLER (opsional, tambah jika punya model)
+  // 'puller/1'            : 'models/puller_1.glb',
+  // GUSSET (opsional)
+  // 'gusset/Combination'  : 'models/gusset_combination.glb',
+};
+
+function swapModelForKey(partKey, partVal) {
+  const mapKey = partKey + '/' + partVal;
+  const modelPath = MODEL_MAP[mapKey];
+  if (!modelPath) return; // file belum ada, skip
+  loadGLBFromUrl(modelPath);
+}
+
+function loadGLBFromUrl(url) {
+  document.getElementById('vpLoading').classList.remove('hidden');
+  const loader = new THREE.GLTFLoader();
+  loader.load(url, gltf => {
+    while(gloveGroup.children.length) gloveGroup.remove(gloveGroup.children[0]);
+    gloveMeshes = [];
+    gltf.scene.traverse(child => {
+      if(child.isMesh){
+        child.castShadow = true;
+        child.receiveShadow = true;
+        child.material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(state.bodyHex||'#f8f4ee'),
+          roughness:0.7, metalness:0.0
+        });
+        gloveMeshes.push(child);
+      }
+    });
+    gloveGroup.add(gltf.scene);
+    // Re-center
+    const box = new THREE.Box3().setFromObject(gloveGroup);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    gloveGroup.position.set(-center.x,-center.y,-center.z);
+    const fov = camera.fov*(Math.PI/180);
+    camDist = (Math.max(size.x,size.y,size.z)/2)/Math.tan(fov/2)*1.5;
+    camera.near = camDist/100; camera.far = camDist*20;
+    camera.updateProjectionMatrix();
+    updateCamera();
+    document.getElementById('vpLoading').classList.add('hidden');
+  }, undefined, err => {
+    console.warn('Model not found:', url, err);
+    document.getElementById('vpLoading').classList.add('hidden');
+  });
+}
+
 // ═══ TABS ═══
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', function() {
@@ -380,12 +448,19 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ═══ CHIPS ═══
+// Parts that trigger model swap (Opsi C)
+const SWAP_PARTS = ['body','knuckle','tab','puller','gusset'];
+
 document.querySelectorAll('.chip').forEach(chip => {
   chip.addEventListener('click', function() {
     document.querySelectorAll('.chip[data-key="'+this.dataset.key+'"]').forEach(c=>c.classList.remove('sel'));
     this.classList.add('sel');
     state[this.dataset.key] = this.dataset.val;
     updateSummary();
+    // Swap model if this part has a GLB mapped
+    if(SWAP_PARTS.includes(this.dataset.key)){
+      swapModelForKey(this.dataset.key, this.dataset.val);
+    }
   });
 });
 
