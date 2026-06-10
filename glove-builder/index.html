@@ -93,6 +93,7 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
 .vp-controls{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:6px}
 .vp-btn{width:34px;height:34px;background:rgba(255,255,255,0.5);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--tr);font-size:16px;color:var(--t2);font-family:monospace}
 .vp-btn:hover{background:var(--white);color:var(--acc)}
+.vp-btn.active{background:rgba(0,71,255,0.15);border-color:rgba(0,71,255,0.4);color:var(--acc)}
 /* loading */
 .vp-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(255,255,255,0.6);backdrop-filter:blur(10px);z-index:5;transition:.3s}
 .vp-loading.hidden{opacity:0;pointer-events:none}
@@ -323,10 +324,18 @@ header{height:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);
     <canvas id="three-canvas"></canvas>
     <div class="vp-label">3D Viewer · Drag to Rotate</div>
     <div class="vp-controls">
-      <button class="vp-btn" id="resetCamBtn" title="Reset">↺</button>
-      <button class="vp-btn" id="autoRotBtn" title="Auto rotate">⟳</button>
-      <button class="vp-btn" id="zoomInBtn" title="Zoom in">+</button>
-      <button class="vp-btn" id="zoomOutBtn" title="Zoom out">−</button>
+      <button class="vp-btn" id="resetCamBtn" title="Reset to full view">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 8a6 6 0 1 0 1.2-3.6"/><path d="M2 3.5V7h3.5"/></svg>
+      </button>
+      <button class="vp-btn" id="autoRotBtn" title="Auto rotate 360°">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 8A5 5 0 1 1 8 3"/><path d="M8 1l3 2-3 2"/></svg>
+      </button>
+      <button class="vp-btn" id="zoomInBtn" title="Zoom in">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4"/><path d="M11 11l2.5 2.5M7 5v4M5 7h4"/></svg>
+      </button>
+      <button class="vp-btn" id="zoomOutBtn" title="Zoom out">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4"/><path d="M11 11l2.5 2.5M5 7h4"/></svg>
+      </button>
     </div>
     <div class="vp-hint">Drag to rotate · Scroll to zoom</div>
   </div>
@@ -421,36 +430,84 @@ const MODEL_MAP = {
   // 'gusset/Combination'  : 'models/gusset_combination.glb',
 };
 
-// ═══ CAMERA FOCUS TARGETS PER PART ═══
-// target: where camera looks AT (world coords after model centered)
-// position offset: camera offset from target in spherical
-// Fine-tune these values after seeing the model
+// ═══ CAMERA FOCUS TARGETS PER PART (NFS Heat style) ═══
+// lookAt = titik yang dilihat kamera [x, y, z]
+// dist   = jarak kamera dari titik
+// phi    = sudut vertikal (1.57=horizontal, <1.57=dari atas, >1.57=dari bawah)
+// theta  = sudut horizontal (0=depan, +PI/2=kanan, -PI/2=kiri, PI=belakang)
+//
+// Referensi anatomi tangan (model sudah di-center):
+//   Ujung jari   ≈ y: +1.0
+//   MCP (knuckle)≈ y: +0.5   z: +0.15 (punggung tangan)
+//   Tengah tangan≈ y:  0.0
+//   Pergelangan  ≈ y: -0.6
+//   Palm (telapak)≈ z: +0.3 (sisi depan)
+//   Punggung     ≈ z: -0.2 (sisi belakang)
+//   Ibu jari     ≈ x: -0.5  y: +0.4
+
 const PART_FOCUS = {
-  // Structure parts
-  'body'        : { lookAt:[0, 0.1, 0],    dist:1.8, phi:1.5,  theta:0.2  },
-  'thumb'       : { lookAt:[-0.5, 0.5, 0.1], dist:1.0, phi:1.4, theta:-0.8 },
-  'knuckle'     : { lookAt:[0, 0.7, 0.2],  dist:1.2, phi:1.6,  theta:0.1  },
-  'gusset'      : { lookAt:[0, 0.2, 0.1],  dist:1.0, phi:1.55, theta:0.3  },
-  'tab'         : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
-  'puller'      : { lookAt:[0.3,-0.8, 0.1],dist:0.9, phi:1.45, theta:0.6  },
-  'palmPatch'   : { lookAt:[0,-0.1, 0.4],  dist:1.0, phi:1.55, theta:0.05 },
-  'palmPadding' : { lookAt:[0,-0.1, 0.4],  dist:1.0, phi:1.55, theta:0.05 },
-  'piping'      : { lookAt:[0, 0.0, 0.3],  dist:1.4, phi:1.5,  theta:0.15 },
-  // Sew method parts
-  'tabMethod'   : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
-  'tabSew'      : { lookAt:[0.3,-0.9, 0.1],dist:0.9, phi:1.45, theta:0.5  },
-  'pullerMethod': { lookAt:[0.3,-0.8, 0.1],dist:0.9, phi:1.45, theta:0.6  },
-  'gussetSew'   : { lookAt:[0, 0.2, 0.1],  dist:1.0, phi:1.55, theta:0.3  },
-  // Material / color → show full glove
-  'matBody'     : { lookAt:[0, 0.1, 0],    dist:2.0, phi:1.5,  theta:0.2  },
-  'matPalm'     : { lookAt:[0,-0.1, 0.4],  dist:1.2, phi:1.55, theta:0.05 },
-  'bodyColor'   : { lookAt:[0, 0.1, 0],    dist:2.0, phi:1.5,  theta:0.2  },
-  'palmColor'   : { lookAt:[0,-0.1, 0.4],  dist:1.2, phi:1.55, theta:0.05 },
-  'pipingColor' : { lookAt:[0, 0.0, 0.3],  dist:1.4, phi:1.5,  theta:0.15 },
-  // Print & logo
-  'printBody'   : { lookAt:[0, 0.3, 0.2],  dist:1.5, phi:1.5,  theta:0.1  },
-  'logoTab'     : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
-  'logoMethod'  : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
+  // ── STRUCTURE ──────────────────────────────────────────────────
+
+  // Body → full glove overview dari depan sedikit atas
+  'body'        : { lookAt:[0,  0.1,  0],   dist:2.2, phi:1.35, theta:0.15 },
+
+  // Thumb → geser kiri ke area ibu jari, angle sedikit dari samping
+  'thumb'       : { lookAt:[-0.45, 0.4, 0.1], dist:0.85, phi:1.45, theta:-0.95 },
+
+  // Knuckle → MCP joint, punggung tangan, angle dari atas-depan
+  'knuckle'     : { lookAt:[0,  0.52, 0.12], dist:0.9,  phi:1.1,  theta:0.1  },
+
+  // Gusset → area tengah jari-jari, angle dari samping 45 derajat
+  'gusset'      : { lookAt:[0,  0.65, 0.05], dist:0.85, phi:1.45, theta:0.78 },
+
+  // Tab → area punggung tengah tangan (metacarpal)
+  'tab'         : { lookAt:[0.1,-0.1, -0.1], dist:0.9,  phi:1.35, theta:0.2  },
+
+  // Puller → punggung tengah tangan, sedikit lebih dekat
+  'puller'      : { lookAt:[0.1,-0.05,-0.1], dist:0.8,  phi:1.3,  theta:0.25 },
+
+  // Palm Patch → flip ke sisi telapak tangan
+  'palmPatch'   : { lookAt:[0,  -0.05, 0.25], dist:1.0, phi:1.55, theta:3.14 },
+
+  // Palm Padding → telapak, lebih dekat
+  'palmPadding' : { lookAt:[0,   0.0,  0.25], dist:0.85, phi:1.5, theta:3.14 },
+
+  // Piping → tepi/sisi tangan, overview
+  'piping'      : { lookAt:[0,   0.2,  0.1],  dist:1.4, phi:1.5,  theta:0.7  },
+
+  // ── SEW METHODS ────────────────────────────────────────────────
+
+  // Tab Method → sama seperti tab
+  'tabMethod'   : { lookAt:[0.1,-0.1, -0.1], dist:0.9,  phi:1.35, theta:0.2  },
+
+  // Tab Sew → sama seperti tab, sedikit lebih dekat
+  'tabSew'      : { lookAt:[0.1,-0.1, -0.1], dist:0.75, phi:1.3,  theta:0.25 },
+
+  // Puller Method → sama seperti puller
+  'pullerMethod': { lookAt:[0.1,-0.05,-0.1], dist:0.8,  phi:1.3,  theta:0.25 },
+
+  // Gusset Sew → area gusset dari samping
+  'gussetSew'   : { lookAt:[0,  0.55, 0.05], dist:0.85, phi:1.45, theta:0.78 },
+
+  // ── MATERIAL & COLOR ───────────────────────────────────────────
+
+  // Body material/color → full overview punggung tangan
+  'matBody'     : { lookAt:[0,  0.15, 0],    dist:2.0,  phi:1.35, theta:0.15 },
+
+  // Palm material/color → flip ke telapak
+  'matPalm'     : { lookAt:[0,  0.0,  0.25], dist:1.3,  phi:1.5,  theta:3.14 },
+  'bodyColor'   : { lookAt:[0,  0.15, 0],    dist:2.0,  phi:1.35, theta:0.15 },
+  'palmColor'   : { lookAt:[0,  0.0,  0.25], dist:1.3,  phi:1.5,  theta:3.14 },
+  'pipingColor' : { lookAt:[0,  0.2,  0.1],  dist:1.4,  phi:1.5,  theta:0.7  },
+
+  // ── PRINT & LOGO ───────────────────────────────────────────────
+
+  // Body print → overview punggung
+  'printBody'   : { lookAt:[0,  0.2, -0.05], dist:1.6,  phi:1.35, theta:0.15 },
+
+  // Logo tab/method → area punggung tengah tangan
+  'logoTab'     : { lookAt:[0.1,-0.1, -0.1], dist:0.85, phi:1.3,  theta:0.2  },
+  'logoMethod'  : { lookAt:[0.1,-0.1, -0.1], dist:0.85, phi:1.3,  theta:0.2  },
 };
 
 // ── Smooth camera animation ──
@@ -518,6 +575,7 @@ function focusCameraOnPart(partKey) {
   if (wasAutoRotate) {
     setTimeout(() => {
       autoRotate = true;
+      document.getElementById('autoRotBtn').classList.add('active');
     }, duration + 200);
   }
 }
@@ -688,7 +746,7 @@ function initThree(){
     prevMouse={x:e.clientX,y:e.clientY};
     autoRotate=false;
     if(camAnim){cancelAnimationFrame(camAnim);camAnim=null;}
-    document.getElementById('autoRotBtn').style.color='';
+    document.getElementById('autoRotBtn').classList.remove('active');
   });
   window.addEventListener('mousemove',e=>{
     if(!isDragging)return;
@@ -819,7 +877,7 @@ function loadEmbeddedModel(){
       // Hide loading, start auto rotate
       document.getElementById('vpLoading').classList.add('hidden');
       autoRotate=true;
-      document.getElementById('autoRotBtn').style.color='var(--acc)';
+      document.getElementById('autoRotBtn').classList.add('active');
     },err=>console.error('GLB parse error:',err));
   };
   document.head.appendChild(s);
@@ -841,7 +899,7 @@ document.getElementById('resetCamBtn').addEventListener('click',()=>{
 });
 document.getElementById('autoRotBtn').addEventListener('click',function(){
   autoRotate=!autoRotate;
-  this.style.color=autoRotate?'var(--acc)':'';
+  this.classList.toggle('active', autoRotate);
 });
 document.getElementById('zoomInBtn').addEventListener('click',()=>{camera.position.z=Math.max(0.5,camera.position.z-0.2);});
 document.getElementById('zoomOutBtn').addEventListener('click',()=>{camera.position.z=Math.min(6,camera.position.z+0.2);});
