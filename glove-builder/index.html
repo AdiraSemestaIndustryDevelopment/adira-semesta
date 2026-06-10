@@ -446,71 +446,71 @@ const MODEL_MAP = {
 //   Ibu jari     ≈ x: -0.5  y: +0.4
 
 const PART_FOCUS = {
-  // ── CATATAN KOORDINAT ─────────────────────────────────────────
-  // Model tangan vertikal, jari ke atas:
-  //   y+ = atas (ujung jari),  y- = bawah (pergelangan)
-  //   x- = kiri (sisi ibu jari), x+ = kanan (sisi kelingking)
-  //   z+ = depan (telapak),    z- = belakang (punggung)
-  //   theta: 0=depan, PI=belakang, -PI/2=dari kiri, +PI/2=dari kanan
-  //   phi: PI/2=horizontal, <PI/2=dari atas, >PI/2=dari bawah
-  //
-  // MAPPING DARI FOTO:
-  //   HITAM  (thumb)    → sisi kiri bawah, ibu jari
-  //   BIRU TUA (palmPatch/Padding) → tengah telapak
-  //   BIRU MUDA (puller)  → bawah pergelangan punggung
-  //   TOSCA  (body)     → area tengah keseluruhan tangan, punggung
-  //   ORANGE (knuckle)  → buku jari tengah
-  //   MERAH  (tab)      → bawah pergelangan, angle kiri 45°
+  // ══════════════════════════════════════════════════════════════
+  // KOORDINAT BERDASARKAN REFERENSI FOTO BLENDER
+  // Model tangan: jari ke atas (Y+), telapak menghadap depan (Z+)
+  //   theta=0      → kamera dari depan (lihat punggung tangan)
+  //   theta=PI     → kamera dari belakang (lihat telapak)
+  //   theta=-PI/2  → kamera dari kiri (sisi ibu jari)
+  //   theta=+PI/2  → kamera dari kanan (sisi kelingking)
+  //   phi < PI/2   → kamera dari atas  (bird eye view)
+  //   phi = PI/2   → kamera sejajar horizontal
+  //   phi > PI/2   → kamera dari bawah
+  // ══════════════════════════════════════════════════════════════
 
-  // ── STRUCTURE ──────────────────────────────────────────────────
+  // ── 4444: GUSSET ──────────────────────────────────────────────
+  // Referensi: tampak atas ke bawah, zoom ke sela-sela jari,
+  // seperti melihat dari sudut 30° di atas tangan ke arah gusset jari
+  // → phi kecil (dari atas), lookAt di area pangkal jari, dist dekat
+  'gusset'      : { lookAt:[0, 0.62, 0.0],   dist:0.75, phi:0.72, theta:0.05 },
+  'gussetSew'   : { lookAt:[0, 0.62, 0.0],   dist:0.75, phi:0.72, theta:0.05 },
 
-  // TOSCA → body full/combination: overview seluruh tangan dari depan-atas
-  'body'        : { lookAt:[0,  0.2, 0.0],  dist:2.0, phi:1.2,  theta:0.0  },
+  // ── 3333: BODY ────────────────────────────────────────────────
+  // Referensi: tampak samping-depan 45°, seluruh tangan terlihat,
+  // tangan sedikit miring, dist medium — seperti overview tangan
+  // → theta sedikit ke kiri, phi horizontal, dist sedang
+  'body'        : { lookAt:[0, 0.15, 0.05],  dist:1.55, phi:1.38, theta:-0.42 },
+  'matBody'     : { lookAt:[0, 0.15, 0.05],  dist:1.55, phi:1.38, theta:-0.42 },
+  'bodyColor'   : { lookAt:[0, 0.15, 0.05],  dist:1.55, phi:1.38, theta:-0.42 },
+  'printBody'   : { lookAt:[0, 0.15, 0.05],  dist:1.55, phi:1.38, theta:-0.42 },
 
-  // HITAM → thumb: sisi kiri bawah ibu jari, angle 45° dari samping kiri
-  'thumb'       : { lookAt:[-0.38, 0.05, 0.05], dist:0.85, phi:1.45, theta:-0.78 },
+  // ── 2222: PULLER ──────────────────────────────────────────────
+  // Referensi: tampak depan pergelangan dari bawah-sedikit,
+  // zoom ke area wrist strap di punggung tangan bagian bawah
+  // → lookAt di area pergelangan bawah, dist dekat, phi sedikit dari bawah
+  'puller'      : { lookAt:[0.02,-0.48,-0.05], dist:0.72, phi:1.65, theta:0.08 },
+  'pullerMethod': { lookAt:[0.02,-0.48,-0.05], dist:0.72, phi:1.65, theta:0.08 },
 
-  // ORANGE → knuckle: buku jari tengah, angle dari depan sedikit atas
-  'knuckle'     : { lookAt:[0.05, 0.42, 0.1], dist:0.85, phi:1.2, theta:0.1 },
+  // ── 1111: PALM PATCH & PALM PADDING ──────────────────────────
+  // Referensi: tampak frontal telapak penuh (palm side),
+  // flat/tegak lurus menghadap telapak, medium dist
+  // → theta=PI (kamera dari belakang model = melihat telapak),
+  //   phi=PI/2 (horizontal), dist sedang
+  'palmPatch'   : { lookAt:[0, 0.08, 0.18],  dist:1.1,  phi:1.57, theta:3.14 },
+  'palmPadding' : { lookAt:[0, 0.08, 0.18],  dist:1.1,  phi:1.57, theta:3.14 },
+  'matPalm'     : { lookAt:[0, 0.08, 0.18],  dist:1.1,  phi:1.57, theta:3.14 },
+  'palmColor'   : { lookAt:[0, 0.08, 0.18],  dist:1.1,  phi:1.57, theta:3.14 },
 
-  // Gusset → sisi jari dari samping 45 derajat
-  'gusset'      : { lookAt:[0,  0.55, 0.05], dist:0.85, phi:1.45, theta:0.78 },
+  // ── THUMB ────────────────────────────────────────────────────
+  // Ibu jari sisi kiri, angle 45° dari kiri, zoom dekat
+  'thumb'       : { lookAt:[-0.38, 0.08, 0.05], dist:0.82, phi:1.45, theta:-0.78 },
 
-  // MERAH → tab: bawah pergelangan, angle dari kiri 45 derajat
-  'tab'         : { lookAt:[-0.05,-0.55,-0.05], dist:0.85, phi:1.55, theta:-0.78 },
+  // ── KNUCKLE ──────────────────────────────────────────────────
+  // Buku jari MCP, dari depan-atas sedikit, zoom medium
+  'knuckle'     : { lookAt:[0.02, 0.44, 0.08], dist:0.82, phi:1.18, theta:0.05 },
 
-  // BIRU MUDA → puller: bawah pergelangan sisi punggung
-  'puller'      : { lookAt:[0.05,-0.52,-0.08], dist:0.8, phi:1.45, theta:0.15 },
+  // ── TAB ──────────────────────────────────────────────────────
+  // Punggung tengah tangan, 45° dari kiri, area metacarpal
+  'tab'         : { lookAt:[-0.04,-0.52,-0.04], dist:0.82, phi:1.52, theta:-0.78 },
+  'tabMethod'   : { lookAt:[-0.04,-0.52,-0.04], dist:0.82, phi:1.52, theta:-0.78 },
+  'tabSew'      : { lookAt:[-0.04,-0.52,-0.04], dist:0.72, phi:1.48, theta:-0.78 },
+  'logoTab'     : { lookAt:[-0.04,-0.52,-0.04], dist:0.82, phi:1.52, theta:-0.78 },
+  'logoMethod'  : { lookAt:[-0.04,-0.52,-0.04], dist:0.82, phi:1.52, theta:-0.78 },
 
-  // BIRU TUA → palmPatch: telapak tengah, flip ke sisi palm (theta PI = belakang model = telapak)
-  'palmPatch'   : { lookAt:[0, 0.05, 0.2],  dist:0.95, phi:1.5,  theta:3.14 },
-
-  // BIRU TUA → palmPadding: sama dengan palmPatch, sedikit lebih dekat
-  'palmPadding' : { lookAt:[0, 0.05, 0.2],  dist:0.85, phi:1.5,  theta:3.14 },
-
-  // Piping → tepi sisi tangan
-  'piping'      : { lookAt:[0,  0.15, 0.05], dist:1.5, phi:1.5,  theta:0.75 },
-
-  // ── SEW METHODS ────────────────────────────────────────────────
-
-  'tabMethod'   : { lookAt:[-0.05,-0.55,-0.05], dist:0.85, phi:1.55, theta:-0.78 },
-  'tabSew'      : { lookAt:[-0.05,-0.55,-0.05], dist:0.75, phi:1.5,  theta:-0.78 },
-  'pullerMethod': { lookAt:[0.05,-0.52,-0.08], dist:0.8,  phi:1.45, theta:0.15  },
-  'gussetSew'   : { lookAt:[0,  0.55, 0.05], dist:0.85, phi:1.45, theta:0.78   },
-
-  // ── MATERIAL & COLOR ───────────────────────────────────────────
-
-  'matBody'     : { lookAt:[0,  0.2, 0.0],  dist:2.0,  phi:1.2,  theta:0.0   },
-  'matPalm'     : { lookAt:[0,  0.05, 0.2], dist:1.2,  phi:1.5,  theta:3.14  },
-  'bodyColor'   : { lookAt:[0,  0.2, 0.0],  dist:2.0,  phi:1.2,  theta:0.0   },
-  'palmColor'   : { lookAt:[0,  0.05, 0.2], dist:1.2,  phi:1.5,  theta:3.14  },
-  'pipingColor' : { lookAt:[0,  0.15, 0.05], dist:1.5, phi:1.5,  theta:0.75  },
-
-  // ── PRINT & LOGO ───────────────────────────────────────────────
-
-  'printBody'   : { lookAt:[0,  0.25,-0.05], dist:1.6, phi:1.25, theta:0.0   },
-  'logoTab'     : { lookAt:[-0.05,-0.55,-0.05], dist:0.85, phi:1.55, theta:-0.78 },
-  'logoMethod'  : { lookAt:[-0.05,-0.55,-0.05], dist:0.85, phi:1.55, theta:-0.78 },
+  // ── PIPING ───────────────────────────────────────────────────
+  // Tepi sisi tangan, overview
+  'piping'      : { lookAt:[0, 0.18, 0.05],  dist:1.45, phi:1.5,  theta:0.72  },
+  'pipingColor' : { lookAt:[0, 0.18, 0.05],  dist:1.45, phi:1.5,  theta:0.72  },
 };
 
 // ── Smooth camera animation ──
