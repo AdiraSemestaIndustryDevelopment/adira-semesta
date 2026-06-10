@@ -421,6 +421,107 @@ const MODEL_MAP = {
   // 'gusset/Combination'  : 'models/gusset_combination.glb',
 };
 
+// ═══ CAMERA FOCUS TARGETS PER PART ═══
+// target: where camera looks AT (world coords after model centered)
+// position offset: camera offset from target in spherical
+// Fine-tune these values after seeing the model
+const PART_FOCUS = {
+  // Structure parts
+  'body'        : { lookAt:[0, 0.1, 0],    dist:1.8, phi:1.5,  theta:0.2  },
+  'thumb'       : { lookAt:[-0.5, 0.5, 0.1], dist:1.0, phi:1.4, theta:-0.8 },
+  'knuckle'     : { lookAt:[0, 0.7, 0.2],  dist:1.2, phi:1.6,  theta:0.1  },
+  'gusset'      : { lookAt:[0, 0.2, 0.1],  dist:1.0, phi:1.55, theta:0.3  },
+  'tab'         : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
+  'puller'      : { lookAt:[0.3,-0.8, 0.1],dist:0.9, phi:1.45, theta:0.6  },
+  'palmPatch'   : { lookAt:[0,-0.1, 0.4],  dist:1.0, phi:1.55, theta:0.05 },
+  'palmPadding' : { lookAt:[0,-0.1, 0.4],  dist:1.0, phi:1.55, theta:0.05 },
+  'piping'      : { lookAt:[0, 0.0, 0.3],  dist:1.4, phi:1.5,  theta:0.15 },
+  // Sew method parts
+  'tabMethod'   : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
+  'tabSew'      : { lookAt:[0.3,-0.9, 0.1],dist:0.9, phi:1.45, theta:0.5  },
+  'pullerMethod': { lookAt:[0.3,-0.8, 0.1],dist:0.9, phi:1.45, theta:0.6  },
+  'gussetSew'   : { lookAt:[0, 0.2, 0.1],  dist:1.0, phi:1.55, theta:0.3  },
+  // Material / color → show full glove
+  'matBody'     : { lookAt:[0, 0.1, 0],    dist:2.0, phi:1.5,  theta:0.2  },
+  'matPalm'     : { lookAt:[0,-0.1, 0.4],  dist:1.2, phi:1.55, theta:0.05 },
+  'bodyColor'   : { lookAt:[0, 0.1, 0],    dist:2.0, phi:1.5,  theta:0.2  },
+  'palmColor'   : { lookAt:[0,-0.1, 0.4],  dist:1.2, phi:1.55, theta:0.05 },
+  'pipingColor' : { lookAt:[0, 0.0, 0.3],  dist:1.4, phi:1.5,  theta:0.15 },
+  // Print & logo
+  'printBody'   : { lookAt:[0, 0.3, 0.2],  dist:1.5, phi:1.5,  theta:0.1  },
+  'logoTab'     : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
+  'logoMethod'  : { lookAt:[0.3,-0.9, 0.1],dist:1.0, phi:1.5,  theta:0.5  },
+};
+
+// ── Smooth camera animation ──
+let camAnim = null; // current animation frame
+
+function focusCameraOnPart(partKey) {
+  const target = PART_FOCUS[partKey];
+  if (!target) return;
+
+  // Cancel any ongoing animation
+  if (camAnim) { cancelAnimationFrame(camAnim); camAnim = null; }
+
+  // Snapshot current state
+  const startTheta  = spherical.theta;
+  const startPhi    = spherical.phi;
+  const startDist   = camDist;
+  const startLookAt = [cameraTarget.x, cameraTarget.y, cameraTarget.z];
+
+  const endTheta  = target.theta;
+  const endPhi    = target.phi;
+  const endDist   = target.dist;
+  const endLookAt = target.lookAt;
+
+  const duration  = 900; // ms
+  const startTime = performance.now();
+
+  // Ease in-out cubic
+  function easeInOut(t) {
+    return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+  }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  // Shortest path for theta (avoid spinning the long way)
+  let dTheta = endTheta - startTheta;
+  while (dTheta >  Math.PI) dTheta -= 2 * Math.PI;
+  while (dTheta < -Math.PI) dTheta += 2 * Math.PI;
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const raw     = Math.min(elapsed / duration, 1);
+    const t       = easeInOut(raw);
+
+    spherical.theta = startTheta + dTheta * t;
+    spherical.phi   = lerp(startPhi,   endPhi,   t);
+    camDist         = lerp(startDist,  endDist,  t);
+
+    cameraTarget.set(
+      lerp(startLookAt[0], endLookAt[0], t),
+      lerp(startLookAt[1], endLookAt[1], t),
+      lerp(startLookAt[2], endLookAt[2], t)
+    );
+
+    updateCamera();
+
+    if (raw < 1) camAnim = requestAnimationFrame(step);
+    else         camAnim = null;
+  }
+
+  // Pause auto-rotate during animation, resume after
+  const wasAutoRotate = autoRotate;
+  autoRotate = false;
+  camAnim = requestAnimationFrame(step);
+
+  if (wasAutoRotate) {
+    setTimeout(() => {
+      autoRotate = true;
+    }, duration + 200);
+  }
+}
+
 function swapModelForKey(partKey, partVal) {
   const mapKey = partKey + '/' + partVal;
   const modelPath = MODEL_MAP[mapKey];
@@ -483,6 +584,8 @@ document.querySelectorAll('.chip').forEach(chip => {
     this.classList.add('sel');
     state[this.dataset.key] = this.dataset.val;
     updateSummary();
+    // Focus camera on this part
+    focusCameraOnPart(this.dataset.key);
     // Swap model if this part has a GLB mapped
     if(SWAP_PARTS.includes(this.dataset.key)){
       swapModelForKey(this.dataset.key, this.dataset.val);
@@ -497,6 +600,7 @@ document.querySelectorAll('.mat-card').forEach(card => {
     this.classList.add('sel');
     state[this.dataset.key] = this.dataset.val;
     updateSummary();
+    focusCameraOnPart(this.dataset.key);
   });
 });
 
@@ -511,6 +615,7 @@ document.querySelectorAll('.sw').forEach(sw => {
     if(this.dataset.key==='pipingColor'){state.pipingHex=this.dataset.hex;document.getElementById('pipingColorName').textContent=this.dataset.val;}
     updateSummary();
     updateModelColor();
+    focusCameraOnPart(this.dataset.key);
   });
 });
 
@@ -541,6 +646,7 @@ let scene,camera,renderer,pivot,gloveGroup,autoRotate=false;
 let isDragging=false,prevMouse={x:0,y:0};
 let spherical={theta:0,phi:Math.PI/2}; // theta=horizontal, phi=vertical
 let camDist=2.5;
+let cameraTarget=new THREE.Vector3(0,0,0); // lookAt point (updated by focus animation)
 let gloveMeshes=[];
 
 function initThree(){
@@ -581,6 +687,7 @@ function initThree(){
     isDragging=true;
     prevMouse={x:e.clientX,y:e.clientY};
     autoRotate=false;
+    if(camAnim){cancelAnimationFrame(camAnim);camAnim=null;}
     document.getElementById('autoRotBtn').style.color='';
   });
   window.addEventListener('mousemove',e=>{
@@ -624,14 +731,13 @@ function initThree(){
   loadEmbeddedModel();
 }
 
-// Camera orbits around pivot (world 0,0,0)
-// spherical coords → cartesian camera position
+// Camera orbits around cameraTarget
 function updateCamera(){
-  const x=camDist*Math.sin(spherical.phi)*Math.sin(spherical.theta);
-  const y=camDist*Math.cos(spherical.phi);
-  const z=camDist*Math.sin(spherical.phi)*Math.cos(spherical.theta);
+  const x=cameraTarget.x + camDist*Math.sin(spherical.phi)*Math.sin(spherical.theta);
+  const y=cameraTarget.y + camDist*Math.cos(spherical.phi);
+  const z=cameraTarget.z + camDist*Math.sin(spherical.phi)*Math.cos(spherical.theta);
   camera.position.set(x,y,z);
-  camera.lookAt(0,0,0);
+  camera.lookAt(cameraTarget);
 }
 
 function resizeRenderer(){
