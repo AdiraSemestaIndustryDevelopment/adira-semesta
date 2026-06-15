@@ -651,6 +651,7 @@ function loadGLBFromUrl(url) {
 
     loader.load(url, gltf => {
       while(gloveGroup.children.length) gloveGroup.remove(gloveGroup.children[0]);
+      gloveGroup.position.set(0,0,0); // reset before measuring bounds (avoids stale offset from previous model)
       gloveMeshes = [];
       gltf.scene.traverse(child => {
         if(child.isMesh){
@@ -662,14 +663,15 @@ function loadGLBFromUrl(url) {
       gloveGroup.add(gltf.scene);
       // Re-center
       const box = new THREE.Box3().setFromObject(gloveGroup);
-
-      // Apply PBR material with realistic skin fade at wrist
-      gloveMeshes.forEach(child=>{
-        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', box.min.y, box.max.y);
-      });
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
       gloveGroup.position.set(-center.x,-center.y,-center.z);
+
+      // Apply PBR material with realistic skin fade at wrist.
+      // Post-centering Y range matches modelMatrix-based world position in shader.
+      gloveMeshes.forEach(child=>{
+        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', box.min.y-center.y, box.max.y-center.y);
+      });
       const fov = camera.fov*(Math.PI/180);
       camDist = (Math.max(size.x,size.y,size.z)/2)/Math.tan(fov/2)*1.5;
       camera.near = camDist/100; camera.far = camDist*20;
@@ -944,30 +946,37 @@ function buildBodyMaterial(baseColorHex, minY, maxY) {
   });
 
   const range = Math.max(maxY - minY, 0.0001);
-  const wristY = minY + range * 0.12;       // bottom ~12% of model = wrist/skin
-  const transition = Math.max(range * 0.05, 0.01);
+  // Fraction of model height (from the bottom) treated as bare skin.
+  // Tune this if the skin area is too large/small.
+  const SKIN_FRACTION = 0.16;
+  const wristY = minY + range * SKIN_FRACTION;
+  const transition = Math.max(range * 0.025, 0.005); // crisp-ish cuff edge
 
   mat.onBeforeCompile = (shader) => {
-    shader.uniforms.skinColor     = { value: SKIN_COLOR.clone() };
-    shader.uniforms.wristY        = { value: wristY };
-    shader.uniforms.skinTransition= { value: transition };
+    shader.uniforms.skinColor      = { value: SKIN_COLOR.clone() };
+    shader.uniforms.wristY         = { value: wristY };
+    shader.uniforms.skinTransition = { value: transition };
 
+    // Use WORLD-SPACE position so it matches the world-space bounding box
+    // used to compute wristY (mesh-local coords can be offset/rotated
+    // relative to the model's overall bounds).
     shader.vertexShader = shader.vertexShader.replace(
       '#include <common>',
-      '#include <common>\nvarying vec3 vModelPos;'
+      '#include <common>\nvarying vec3 vWorldPos;'
     );
     shader.vertexShader = shader.vertexShader.replace(
       '#include <begin_vertex>',
-      '#include <begin_vertex>\n\tvModelPos = transformed;'
+      '#include <begin_vertex>\n\tvWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;'
     );
 
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <common>',
       `#include <common>
-varying vec3 vModelPos;
+varying vec3 vWorldPos;
 uniform vec3 skinColor;
 uniform float wristY;
 uniform float skinTransition;
+
 float skinHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float skinNoise(vec2 p){
   vec2 i = floor(p); vec2 f = fract(p);
@@ -978,8 +987,16 @@ float skinNoise(vec2 p){
   vec2 u = f * f * (3.0 - 2.0 * f);
   return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
+// Multi-octave noise for organic skin texture
+float skinFbm(vec2 p){
+  float v = 0.0;
+  v += skinNoise(p * 1.0)  * 0.55;
+  v += skinNoise(p * 2.7)  * 0.28;
+  v += skinNoise(p * 6.3)  * 0.17;
+  return v;
+}
 float getSkinMix(){
-  return 1.0 - smoothstep(wristY - skinTransition, wristY + skinTransition, vModelPos.y);
+  return 1.0 - smoothstep(wristY - skinTransition, wristY + skinTransition, vWorldPos.y);
 }`
     );
 
@@ -989,9 +1006,18 @@ float getSkinMix(){
 {
   float sMix = getSkinMix();
   if (sMix > 0.001) {
-    float pores = skinNoise(vModelPos.xz * 80.0) * 0.05
-                 + skinNoise(vModelPos.xz * 14.0) * 0.03;
-    vec3 skinTone = skinColor + vec3(pores - 0.03);
+    vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
+
+    // Large-scale warm/cool blotches (natural skin tone variation)
+    float blotch = skinFbm(sp * 0.35);
+    vec3 warmTone = skinColor * 1.10 + vec3(0.045, 0.012, 0.0);
+    vec3 coolTone = skinColor * 0.92 + vec3(0.0, 0.0, 0.01);
+    vec3 skinTone = mix(coolTone, warmTone, blotch);
+
+    // Fine pore texture
+    float pores = skinFbm(sp * 3.2) * 0.07 - 0.035;
+    skinTone += vec3(pores);
+
     diffuseColor.rgb = mix(diffuseColor.rgb, skinTone, sMix);
   }
 }`
@@ -1003,8 +1029,24 @@ float getSkinMix(){
 {
   float sMix = getSkinMix();
   if (sMix > 0.001) {
-    float skinRough = 0.5 + skinNoise(vModelPos.xz * 50.0) * 0.18;
+    vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
+    float skinRough = 0.45 + skinFbm(sp * 2.0) * 0.25;
     roughnessFactor = mix(roughnessFactor, skinRough, sMix);
+  }
+}`
+    );
+
+    // Subtle bump/pore perturbation on the shading normal for skin areas
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <normal_fragment_maps>',
+      `#include <normal_fragment_maps>
+{
+  float sMix = getSkinMix();
+  if (sMix > 0.001) {
+    vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
+    float nx = skinFbm(sp * 6.0 + vec2(11.0, 0.0)) - 0.5;
+    float ny = skinFbm(sp * 6.0 + vec2(0.0, 7.0)) - 0.5;
+    normal = normalize(normal + vec3(nx, ny, 0.0) * 0.22 * sMix);
   }
 }`
     );
@@ -1033,6 +1075,7 @@ function loadEmbeddedModel(){
       const buf=b64ToArrayBuffer(MODEL_B64);
       loader.parse(buf,'',gltf=>{
       while(gloveGroup.children.length)gloveGroup.remove(gloveGroup.children[0]);
+      gloveGroup.position.set(0,0,0); // reset before measuring bounds
       gloveMeshes=[];
 
       gltf.scene.traverse(child=>{
@@ -1047,18 +1090,19 @@ function loadEmbeddedModel(){
 
       // Center model on pivot (world origin)
       const box=new THREE.Box3().setFromObject(gloveGroup);
-
-      // Apply PBR material with realistic skin fade at wrist,
-      // using this model's own Y-range (local space, pre-centering)
-      gloveMeshes.forEach(child=>{
-        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', box.min.y, box.max.y);
-      });
       const center=box.getCenter(new THREE.Vector3());
       const size=box.getSize(new THREE.Vector3());
       const maxDim=Math.max(size.x,size.y,size.z);
 
       // Offset gloveGroup so its center sits at pivot origin
       gloveGroup.position.set(-center.x,-center.y,-center.z);
+
+      // Apply PBR material with realistic skin fade at wrist.
+      // Pass the POST-centering world Y range (matches modelMatrix-based
+      // world position used inside the shader).
+      gloveMeshes.forEach(child=>{
+        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', box.min.y-center.y, box.max.y-center.y);
+      });
 
       // Set camera distance to fit model
       const fov=camera.fov*(Math.PI/180);
