@@ -656,16 +656,17 @@ function loadGLBFromUrl(url) {
         if(child.isMesh){
           child.castShadow = true;
           child.receiveShadow = true;
-          child.material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(state.bodyHex||'#f8f4ee'),
-            roughness:0.7, metalness:0.0
-          });
           gloveMeshes.push(child);
         }
       });
       gloveGroup.add(gltf.scene);
       // Re-center
       const box = new THREE.Box3().setFromObject(gloveGroup);
+
+      // Apply PBR material with realistic skin fade at wrist
+      gloveMeshes.forEach(child=>{
+        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', box.min.y, box.max.y);
+      });
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
       gloveGroup.position.set(-center.x,-center.y,-center.z);
@@ -681,15 +682,24 @@ function loadGLBFromUrl(url) {
     });
   }
 
-  // Load DRACOLoader if not already loaded
-  if (!THREE.DRACOLoader) {
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js';
-    s.onload = doLoad;
-    document.head.appendChild(s);
-  } else {
-    doLoad();
+  // Use already-loaded libraries (preloaded on page init)
+  function waitAndLoad(attempts) {
+    if (THREE.DRACOLoader && THREE.GLTFLoader) {
+      doLoad();
+    } else if (attempts > 0) {
+      setTimeout(() => waitAndLoad(attempts - 1), 200);
+    } else {
+      // Fallback: load on demand
+      const loadDraco = () => doLoad();
+      if (!THREE.DRACOLoader) {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js';
+        s.onload = loadDraco;
+        document.head.appendChild(s);
+      } else { loadDraco(); }
+    }
   }
+  waitAndLoad(15); // wait up to 3 seconds
 }
 
 // ═══ TABS ═══
@@ -781,24 +791,46 @@ function initThree(){
   const canvas=document.getElementById('three-canvas');
   const vp=document.getElementById('viewport');
   renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  renderer.shadowMap.enabled=true;
-  renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure=1.4;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  renderer.physicallyCorrectLights = true;
   scene=new THREE.Scene();
   const w=vp.clientWidth,h=vp.clientHeight;
   camera=new THREE.PerspectiveCamera(40,w/h,0.01,100);
 
   // Lighting
-  scene.add(new THREE.AmbientLight(0xffffff,0.5));
-  const key=new THREE.DirectionalLight(0xfff5e0,1.8);
-  key.position.set(2,4,3);key.castShadow=true;scene.add(key);
-  const fill=new THREE.DirectionalLight(0xe0eeff,0.6);
-  fill.position.set(-3,1,-2);scene.add(fill);
-  const rim=new THREE.DirectionalLight(0xffffff,0.4);
-  rim.position.set(0,-2,-3);scene.add(rim);
-  scene.add(new THREE.DirectionalLight(0xffffff,0.3)).position.set(0,5,0);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+  // Key light — warm from upper right (like studio softbox)
+  const key = new THREE.DirectionalLight(0xfff8f0, 2.0);
+  key.position.set(2, 4, 3); key.castShadow = true;
+  key.shadow.mapSize.width = 2048; key.shadow.mapSize.height = 2048;
+  key.shadow.radius = 4;
+  scene.add(key);
+
+  // Fill light — cool from left to separate shadows
+  const fill = new THREE.DirectionalLight(0xd0e8ff, 0.7);
+  fill.position.set(-3, 2, -1); scene.add(fill);
+
+  // Rim light — bright from behind for edge definition
+  const rim = new THREE.DirectionalLight(0xffffff, 0.6);
+  rim.position.set(0, -1, -4); scene.add(rim);
+
+  // Top bounce — simulate ceiling bounce light
+  const top = new THREE.DirectionalLight(0xfff5e8, 0.35);
+  top.position.set(0, 6, 1); scene.add(top);
+
+  // Bottom bounce — subtle ground reflect
+  const bot = new THREE.DirectionalLight(0xe8f0ff, 0.15);
+  bot.position.set(0, -4, 2); scene.add(bot);
+
+  // Hemisphere light — sky/ground ambient for realism
+  const hemi = new THREE.HemisphereLight(0xfff8f0, 0xd8e8f8, 0.4);
+  scene.add(hemi);
 
   // pivot = center of rotation, always at world origin
   pivot=new THREE.Object3D();
@@ -896,6 +928,95 @@ function b64ToArrayBuffer(b64){
   return buf;
 }
 
+// ═══ WRIST SKIN MATERIAL (realistic human skin at wrist/forearm) ═══
+// Adjust this hex to match desired skin tone
+const SKIN_COLOR = new THREE.Color('#d6a98a');
+
+// Builds a glove material that fades into realistic skin color/texture
+// near the bottom of the model (wrist/forearm area), based on the
+// model's own bounding box (minY/maxY in local space).
+function buildBodyMaterial(baseColorHex, minY, maxY) {
+  const mat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(baseColorHex || '#f8f4ee'),
+    roughness: 0.65,
+    metalness: 0.0,
+    envMapIntensity: 1.0,
+  });
+
+  const range = Math.max(maxY - minY, 0.0001);
+  const wristY = minY + range * 0.12;       // bottom ~12% of model = wrist/skin
+  const transition = Math.max(range * 0.05, 0.01);
+
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.skinColor     = { value: SKIN_COLOR.clone() };
+    shader.uniforms.wristY        = { value: wristY };
+    shader.uniforms.skinTransition= { value: transition };
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <common>',
+      '#include <common>\nvarying vec3 vModelPos;'
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\n\tvModelPos = transformed;'
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <common>',
+      `#include <common>
+varying vec3 vModelPos;
+uniform vec3 skinColor;
+uniform float wristY;
+uniform float skinTransition;
+float skinHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float skinNoise(vec2 p){
+  vec2 i = floor(p); vec2 f = fract(p);
+  float a = skinHash(i);
+  float b = skinHash(i + vec2(1.0, 0.0));
+  float c = skinHash(i + vec2(0.0, 1.0));
+  float d = skinHash(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+float getSkinMix(){
+  return 1.0 - smoothstep(wristY - skinTransition, wristY + skinTransition, vModelPos.y);
+}`
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <color_fragment>',
+      `#include <color_fragment>
+{
+  float sMix = getSkinMix();
+  if (sMix > 0.001) {
+    float pores = skinNoise(vModelPos.xz * 80.0) * 0.05
+                 + skinNoise(vModelPos.xz * 14.0) * 0.03;
+    vec3 skinTone = skinColor + vec3(pores - 0.03);
+    diffuseColor.rgb = mix(diffuseColor.rgb, skinTone, sMix);
+  }
+}`
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <roughnessmap_fragment>',
+      `#include <roughnessmap_fragment>
+{
+  float sMix = getSkinMix();
+  if (sMix > 0.001) {
+    float skinRough = 0.5 + skinNoise(vModelPos.xz * 50.0) * 0.18;
+    roughnessFactor = mix(roughnessFactor, skinRough, sMix);
+  }
+}`
+    );
+
+    mat.userData.shader = shader;
+  };
+
+  mat.userData.wristY = wristY;
+  mat.userData.transition = transition;
+  return mat;
+}
+
 function loadEmbeddedModel(){
   // Load GLTFLoader + DRACOLoader dynamically
   const s=document.createElement('script');
@@ -918,12 +1039,6 @@ function loadEmbeddedModel(){
         if(child.isMesh){
           child.castShadow=true;
           child.receiveShadow=true;
-          // Apply PBR leather material
-          child.material=new THREE.MeshStandardMaterial({
-            color:new THREE.Color(state.bodyHex||'#f8f4ee'),
-            roughness:0.7,
-            metalness:0.0,
-          });
           gloveMeshes.push(child);
         }
       });
@@ -932,6 +1047,12 @@ function loadEmbeddedModel(){
 
       // Center model on pivot (world origin)
       const box=new THREE.Box3().setFromObject(gloveGroup);
+
+      // Apply PBR material with realistic skin fade at wrist,
+      // using this model's own Y-range (local space, pre-centering)
+      gloveMeshes.forEach(child=>{
+        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', box.min.y, box.max.y);
+      });
       const center=box.getCenter(new THREE.Vector3());
       const size=box.getSize(new THREE.Vector3());
       const maxDim=Math.max(size.x,size.y,size.z);
@@ -983,8 +1104,35 @@ document.getElementById('autoRotBtn').addEventListener('click',function(){
 document.getElementById('zoomInBtn').addEventListener('click',()=>{camera.position.z=Math.max(0.5,camera.position.z-0.2);});
 document.getElementById('zoomOutBtn').addEventListener('click',()=>{camera.position.z=Math.min(6,camera.position.z+0.2);});
 
+// ── PRELOAD libraries immediately so first click is instant ──
+function preloadLibraries() {
+  const libs = [
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js'
+  ];
+  libs.forEach(src => {
+    if (!document.querySelector('script[src="'+src+'"]')) {
+      const s = document.createElement('script');
+      s.src = src; s.async = true;
+      document.head.appendChild(s);
+    }
+  });
+}
+
+// ── PRELOAD model files into browser cache in background ──
+function preloadModels() {
+  const urls = Object.values(MODEL_MAP);
+  urls.forEach(url => {
+    fetch(url, { method: 'GET', cache: 'force-cache' })
+      .catch(() => {}); // silent fail if file doesn't exist yet
+  });
+}
+
 initThree();
 updateSummary();
+preloadLibraries();
+// Preload models after page fully interactive (2s delay)
+setTimeout(preloadModels, 2000);
 </script>
 </body>
 </html>
