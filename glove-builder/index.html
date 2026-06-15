@@ -662,21 +662,20 @@ function loadGLBFromUrl(url) {
       });
       gloveGroup.add(gltf.scene);
       gloveGroup.updateMatrixWorld(true);
+
+      // Classify meshes: hand (always skin) vs glove (user color)
+      const cls = classifyMeshes(gloveMeshes);
+      handMeshes = cls.hand;
+      gloveMeshes = cls.glove;
+
+      gloveMeshes.forEach(child=>{ child.material = buildGloveMaterial(state.bodyHex||'#f8f4ee'); });
+      handMeshes.forEach(child=>{ child.material = buildSkinMaterial(); });
+
       // Re-center
       const box = new THREE.Box3().setFromObject(gloveGroup);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
-
-      // Detect the wrist/cuff boundary from geometry (pre-centering coords)
-      const boundary = findWristBoundaryY(gloveMeshes, box);
-
       gloveGroup.position.set(-center.x,-center.y,-center.z);
-
-      // Apply PBR material with realistic skin below the detected
-      // cuff boundary, sharp edge above. Adjust for post-centering Y.
-      gloveMeshes.forEach(child=>{
-        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', boundary.wristY-center.y, boundary.transition);
-      });
       const fov = camera.fov*(Math.PI/180);
       camDist = (Math.max(size.x,size.y,size.z)/2)/Math.tan(fov/2)*1.5;
       camera.near = camDist/100; camera.far = camDist*20;
@@ -793,6 +792,7 @@ let spherical={theta:0,phi:Math.PI/2}; // theta=horizontal, phi=vertical
 let camDist=2.5;
 let cameraTarget=new THREE.Vector3(0,0,0); // lookAt point (updated by focus animation)
 let gloveMeshes=[];
+let handMeshes=[];
 
 function initThree(){
   const canvas=document.getElementById('three-canvas');
@@ -935,98 +935,96 @@ function b64ToArrayBuffer(b64){
   return buf;
 }
 
-// ═══ WRIST SKIN MATERIAL (realistic human skin at wrist/forearm) ═══
+// ═══ DUAL-MESH MATERIAL SYSTEM ═══
+// The model contains 2 separate meshes:
+//  - HAND mesh  → always realistic human skin (color + texture)
+//  - GLOVE mesh → colored per user selection (leather/material)
+// The glove mesh sits OUTSIDE the hand mesh, covering it everywhere
+// except the wrist/forearm, where the hand mesh shows through.
+
 // Adjust this hex to match desired skin tone
 const SKIN_COLOR = new THREE.Color('#d6a98a');
 
-// Builds a glove material that fades into realistic skin color/texture
-// near the bottom of the model (wrist/forearm area), based on the
-// model's own bounding box (minY/maxY in local space).
-// Analyze the model's geometry to find the cuff/wrist boundary:
-// the Y level where the cross-sectional radius (distance from the
-// vertical axis) transitions from the narrower wrist/forearm (below)
-// to the wider glove cuff (above). Returns {wristY, transition} in
-// LOCAL (pre-centering) coordinates.
-function findWristBoundaryY(meshes, box) {
-  const range = box.max.y - box.min.y;
-  if (range < 1e-6) return { wristY: box.min.y, transition: 0.01 };
+// Classify meshes into { glove: [...], hand: [...] }
+// 1) Try name-based detection (hand/skin/arm/tangan vs glove/sarung)
+// 2) Fallback: the mesh extending lowest (smallest world min.y) is the
+//    hand (it's visible below the glove cuff at the wrist)
+// 3) If only 1 mesh exists, treat it entirely as the glove mesh
+function classifyMeshes(meshes) {
+  if (meshes.length <= 1) {
+    return { glove: meshes.slice(), hand: [] };
+  }
 
-  const NBINS = 60;
-  const binMinY = box.min.y;
-  const binSize = range / NBINS;
-  const binMaxR = new Array(NBINS).fill(0);
-  const tmp = new THREE.Vector3();
+  const hand = [], glove = [];
+  let matched = 0;
+  meshes.forEach(m => {
+    const name = (m.name || '').toLowerCase();
+    if (/hand|skin|arm|wrist|tangan|kulit/.test(name)) { hand.push(m); matched++; }
+    else if (/glove|sarung|leather|cuff|outer/.test(name)) { glove.push(m); matched++; }
+  });
+  if (matched === meshes.length && hand.length && glove.length) {
+    return { glove, hand };
+  }
 
-  meshes.forEach(mesh => {
-    const geom = mesh.geometry;
-    const posAttr = geom && geom.attributes && geom.attributes.position;
-    if (!posAttr) return;
-    const mw = mesh.matrixWorld;
-    const count = posAttr.count;
-    const step = count > 20000 ? Math.ceil(count / 20000) : 1;
-    for (let i = 0; i < count; i += step) {
-      tmp.fromBufferAttribute(posAttr, i);
-      tmp.applyMatrix4(mw);
-      const y = tmp.y;
-      const r = Math.sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
-      let bin = Math.floor((y - binMinY) / binSize);
-      if (bin < 0) bin = 0;
-      if (bin >= NBINS) bin = NBINS - 1;
-      if (r > binMaxR[bin]) binMaxR[bin] = r;
-    }
+  // Fallback: bounding-box heuristic
+  let lowestMesh = null, lowestY = Infinity;
+  meshes.forEach(m => {
+    const b = new THREE.Box3().setFromObject(m);
+    if (b.min.y < lowestY) { lowestY = b.min.y; lowestMesh = m; }
   });
 
-  // Only search the bottom ~35% of the model for the wrist→cuff transition
-  const searchBins = Math.max(3, Math.floor(NBINS * 0.35));
-
-  // Baseline radius = the narrow wrist/forearm tube at the very bottom
-  let baseline = 0, bc = 0;
-  for (let i = 0; i < Math.min(4, searchBins); i++) {
-    if (binMaxR[i] > 0) { baseline += binMaxR[i]; bc++; }
-  }
-  baseline = bc ? baseline / bc : 0;
-
-  // Find first point (scanning upward) where the radius becomes
-  // noticeably larger than the wrist baseline — that's the cuff edge.
-  let boundaryBin = -1;
-  if (baseline > 0) {
-    for (let i = 1; i < searchBins - 1; i++) {
-      if (binMaxR[i] > baseline * 1.12 && binMaxR[i + 1] > baseline * 1.12) {
-        boundaryBin = i;
-        break;
-      }
-    }
-  }
-
-  let wristY;
-  if (boundaryBin >= 0) {
-    wristY = binMinY + boundaryBin * binSize;
-  } else {
-    // Fallback: fixed fraction if no clear cuff flare is detected
-    wristY = binMinY + range * 0.16;
-  }
-
-  // Sharp/hard-ish edge (anti-aliased over a tiny band)
-  const transition = Math.max(range * 0.006, 0.0015);
-  return { wristY, transition };
+  const hand2 = [], glove2 = [];
+  meshes.forEach(m => (m === lowestMesh ? hand2 : glove2).push(m));
+  return { glove: glove2, hand: hand2 };
 }
 
-function buildBodyMaterial(baseColorHex, wristY, transition) {
-  const mat = new THREE.MeshStandardMaterial({
+// Shared GLSL noise helpers, injected into both materials
+const SKIN_GLSL_COMMON = `
+varying vec3 vWorldPos;
+uniform vec3 skinColor;
+float skinHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float skinNoise(vec2 p){
+  vec2 i = floor(p); vec2 f = fract(p);
+  float a = skinHash(i);
+  float b = skinHash(i + vec2(1.0, 0.0));
+  float c = skinHash(i + vec2(0.0, 1.0));
+  float d = skinHash(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+float skinFbm(vec2 p){
+  float v = 0.0;
+  v += skinNoise(p * 1.0)  * 0.55;
+  v += skinNoise(p * 2.7)  * 0.28;
+  v += skinNoise(p * 6.3)  * 0.17;
+  return v;
+}
+`;
+
+// Plain leather/material for the GLOVE mesh — colored per user selection
+function buildGloveMaterial(baseColorHex) {
+  return new THREE.MeshStandardMaterial({
     color: new THREE.Color(baseColorHex || '#f8f4ee'),
     roughness: 0.65,
     metalness: 0.0,
     envMapIntensity: 1.0,
   });
+}
+
+// Realistic human skin material for the HAND mesh — applied everywhere
+// on this mesh (the glove mesh covers most of it, only wrist/forearm
+// and any gaps will actually be visible).
+function buildSkinMaterial() {
+  const mat = new THREE.MeshStandardMaterial({
+    color: SKIN_COLOR.clone(),
+    roughness: 0.5,
+    metalness: 0.0,
+    envMapIntensity: 1.0,
+  });
 
   mat.onBeforeCompile = (shader) => {
-    shader.uniforms.skinColor      = { value: SKIN_COLOR.clone() };
-    shader.uniforms.wristY         = { value: wristY };
-    shader.uniforms.skinTransition = { value: transition };
+    shader.uniforms.skinColor = { value: SKIN_COLOR.clone() };
 
-    // Use WORLD-SPACE position so it matches the world-space bounding box
-    // used to compute wristY (mesh-local coords can be offset/rotated
-    // relative to the model's overall bounds).
     shader.vertexShader = shader.vertexShader.replace(
       '#include <common>',
       '#include <common>\nvarying vec3 vWorldPos;'
@@ -1038,55 +1036,21 @@ function buildBodyMaterial(baseColorHex, wristY, transition) {
 
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <common>',
-      `#include <common>
-varying vec3 vWorldPos;
-uniform vec3 skinColor;
-uniform float wristY;
-uniform float skinTransition;
-
-float skinHash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float skinNoise(vec2 p){
-  vec2 i = floor(p); vec2 f = fract(p);
-  float a = skinHash(i);
-  float b = skinHash(i + vec2(1.0, 0.0));
-  float c = skinHash(i + vec2(0.0, 1.0));
-  float d = skinHash(i + vec2(1.0, 1.0));
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-}
-// Multi-octave noise for organic skin texture
-float skinFbm(vec2 p){
-  float v = 0.0;
-  v += skinNoise(p * 1.0)  * 0.55;
-  v += skinNoise(p * 2.7)  * 0.28;
-  v += skinNoise(p * 6.3)  * 0.17;
-  return v;
-}
-float getSkinMix(){
-  return 1.0 - smoothstep(wristY - skinTransition, wristY + skinTransition, vWorldPos.y);
-}`
+      '#include <common>\n' + SKIN_GLSL_COMMON
     );
 
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <color_fragment>',
       `#include <color_fragment>
 {
-  float sMix = getSkinMix();
-  if (sMix > 0.001) {
-    vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
-
-    // Large-scale warm/cool blotches (natural skin tone variation)
-    float blotch = skinFbm(sp * 0.35);
-    vec3 warmTone = skinColor * 1.10 + vec3(0.045, 0.012, 0.0);
-    vec3 coolTone = skinColor * 0.92 + vec3(0.0, 0.0, 0.01);
-    vec3 skinTone = mix(coolTone, warmTone, blotch);
-
-    // Fine pore texture
-    float pores = skinFbm(sp * 3.2) * 0.07 - 0.035;
-    skinTone += vec3(pores);
-
-    diffuseColor.rgb = mix(diffuseColor.rgb, skinTone, sMix);
-  }
+  vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
+  float blotch = skinFbm(sp * 0.35);
+  vec3 warmTone = skinColor * 1.10 + vec3(0.045, 0.012, 0.0);
+  vec3 coolTone = skinColor * 0.92 + vec3(0.0, 0.0, 0.01);
+  vec3 skinTone = mix(coolTone, warmTone, blotch);
+  float pores = skinFbm(sp * 3.2) * 0.07 - 0.035;
+  skinTone += vec3(pores);
+  diffuseColor.rgb = skinTone;
 }`
     );
 
@@ -1094,35 +1058,23 @@ float getSkinMix(){
       '#include <roughnessmap_fragment>',
       `#include <roughnessmap_fragment>
 {
-  float sMix = getSkinMix();
-  if (sMix > 0.001) {
-    vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
-    float skinRough = 0.45 + skinFbm(sp * 2.0) * 0.25;
-    roughnessFactor = mix(roughnessFactor, skinRough, sMix);
-  }
+  vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
+  roughnessFactor = 0.45 + skinFbm(sp * 2.0) * 0.25;
 }`
     );
 
-    // Subtle bump/pore perturbation on the shading normal for skin areas
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <normal_fragment_maps>',
       `#include <normal_fragment_maps>
 {
-  float sMix = getSkinMix();
-  if (sMix > 0.001) {
-    vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
-    float nx = skinFbm(sp * 6.0 + vec2(11.0, 0.0)) - 0.5;
-    float ny = skinFbm(sp * 6.0 + vec2(0.0, 7.0)) - 0.5;
-    normal = normalize(normal + vec3(nx, ny, 0.0) * 0.22 * sMix);
-  }
+  vec2 sp = vWorldPos.xz * 22.0 + vWorldPos.y * 4.0;
+  float nx = skinFbm(sp * 6.0 + vec2(11.0, 0.0)) - 0.5;
+  float ny = skinFbm(sp * 6.0 + vec2(0.0, 7.0)) - 0.5;
+  normal = normalize(normal + vec3(nx, ny, 0.0) * 0.22);
 }`
     );
-
-    mat.userData.shader = shader;
   };
 
-  mat.userData.wristY = wristY;
-  mat.userData.transition = transition;
   return mat;
 }
 
@@ -1156,23 +1108,22 @@ function loadEmbeddedModel(){
       gloveGroup.add(gltf.scene);
       gloveGroup.updateMatrixWorld(true);
 
+      // Classify meshes: hand (always skin) vs glove (user color)
+      const cls=classifyMeshes(gloveMeshes);
+      handMeshes=cls.hand;
+      gloveMeshes=cls.glove;
+
+      gloveMeshes.forEach(child=>{ child.material = buildGloveMaterial(state.bodyHex||'#f8f4ee'); });
+      handMeshes.forEach(child=>{ child.material = buildSkinMaterial(); });
+
       // Center model on pivot (world origin)
       const box=new THREE.Box3().setFromObject(gloveGroup);
       const center=box.getCenter(new THREE.Vector3());
       const size=box.getSize(new THREE.Vector3());
       const maxDim=Math.max(size.x,size.y,size.z);
 
-      // Detect the wrist/cuff boundary from geometry (pre-centering coords)
-      const boundary=findWristBoundaryY(gloveMeshes, box);
-
       // Offset gloveGroup so its center sits at pivot origin
       gloveGroup.position.set(-center.x,-center.y,-center.z);
-
-      // Apply PBR material with realistic skin below the detected
-      // cuff boundary, sharp edge above. Adjust for post-centering Y.
-      gloveMeshes.forEach(child=>{
-        child.material = buildBodyMaterial(state.bodyHex||'#f8f4ee', boundary.wristY-center.y, boundary.transition);
-      });
 
       // Set camera distance to fit model
       const fov=camera.fov*(Math.PI/180);
